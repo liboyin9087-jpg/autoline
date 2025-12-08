@@ -1,8 +1,8 @@
 FROM node:20-slim
 WORKDIR /app
-COPY package.json ./
+COPY package.json package-lock.json ./
 # 確保安裝 dependencies
-RUN npm install --production
+RUN npm ci --only=production
 COPY dist ./dist
 COPY public ./public
 COPY server.js ./
