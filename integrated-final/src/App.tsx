@@ -600,8 +600,12 @@ const App: React.FC = () => {
         
         {isLoading && (
           <div className="flex justify-center my-4">
-            <div className="bg-white/80 backdrop-blur px-5 py-2 rounded-full text-fairy-primary text-sm flex items-center gap-2 shadow-soft border border-fairy-primary/10 animate-pulse">
-              <span className="animate-bounce text-lg">✨</span>
+            <div className="bg-white/80 backdrop-blur px-5 py-3 rounded-full text-fairy-primary text-sm flex items-center gap-3 shadow-soft border border-fairy-primary/10">
+              <div className="flex gap-1">
+                <div className="w-2 h-2 bg-fairy-primary rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                <div className="w-2 h-2 bg-fairy-primary rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                <div className="w-2 h-2 bg-fairy-primary rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+              </div>
               <span>{PERSONA_UI_CONFIG[settings.persona]?.loading}</span>
             </div>
           </div>

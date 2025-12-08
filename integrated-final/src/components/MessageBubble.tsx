@@ -1,9 +1,28 @@
-import React from 'react';
+import React, { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Message, MessageRole, FileArtifact, MessageStatus } from '../types';
 import { FileArtifactCard } from './FileArtifactCard';
-import { User, Zap, Check, CheckCheck, AlertCircle, RefreshCw, Paperclip } from 'lucide-react';
+import { User, Zap, Check, CheckCheck, AlertCircle, RefreshCw, Paperclip, Copy } from 'lucide-react';
+
+// 格式化時間顯示
+const formatTime = (date: Date) => {
+  const now = new Date();
+  const diff = now.getTime() - date.getTime();
+  const minutes = Math.floor(diff / 60000);
+  
+  if (minutes < 1) return '剛剛';
+  if (minutes < 60) return `${minutes}分鐘前`;
+  if (minutes < 1440) {
+    const hours = Math.floor(minutes / 60);
+    return `${hours}小時前`;
+  }
+  
+  return date.toLocaleTimeString('zh-TW', { 
+    hour: '2-digit', 
+    minute: '2-digit' 
+  });
+};
 
 export const MessageBubble: React.FC<{ 
   message: Message; 
@@ -14,6 +33,18 @@ export const MessageBubble: React.FC<{
   onRetry?: (messageId: string) => void;
 }> = ({ message, userAvatar, botAvatar, botName, onPreview, onRetry }) => {
   const isModel = message.role === MessageRole.MODEL;
+  const [showCopyToast, setShowCopyToast] = useState(false);
+  
+  // 複製訊息到剪貼簿
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(message.text);
+      setShowCopyToast(true);
+      setTimeout(() => setShowCopyToast(false), 2000);
+    } catch (err) {
+      console.error('複製失敗:', err);
+    }
+  };
   
   // 狀態圖示渲染
   const renderStatusIcon = () => {
@@ -40,17 +71,35 @@ export const MessageBubble: React.FC<{
         </div>
       )}
 
-      <div className={`flex flex-col max-w-[85%] sm:max-w-[80%]`}>
+      <div className={`flex flex-col max-w-[80%] sm:max-w-[75%] md:max-w-[70%]`}>
         {/* 名字標籤 */}
         {isModel && <span className="text-[11px] text-gray-500 mb-1 ml-2 font-medium">{botName || "智慧仙姑"}</span>}
         
-        <div className={`relative px-4 py-3 rounded-2xl text-sm leading-relaxed shadow-soft
+        <div className={`group relative px-4 py-3 rounded-2xl text-sm leading-relaxed shadow-soft
           ${isModel 
             ? 'bg-white text-gray-800 rounded-tl-none border border-white' 
             : message.status === MessageStatus.FAILED 
               ? 'bg-red-500 text-white rounded-tr-none shadow-md border border-red-600'
               : 'bg-fairy-primary text-white rounded-tr-none shadow-md'
           }`}>
+            
+            {/* 複製按鈕（僅 AI 訊息且滑鼠懸停時顯示） */}
+            {isModel && message.status === MessageStatus.SENT && (
+              <button
+                onClick={handleCopy}
+                className="absolute top-2 right-2 p-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 opacity-0 group-hover:opacity-100 transition-opacity"
+                title="複製訊息"
+              >
+                <Copy size={14} className="text-gray-600" />
+              </button>
+            )}
+            
+            {/* 複製成功提示 */}
+            {showCopyToast && (
+              <div className="absolute -top-8 right-2 bg-green-500 text-white text-xs px-2 py-1 rounded shadow-lg animate-fade-in">
+                已複製
+              </div>
+            )}
             
             {/* 附件預覽 */}
             {message.attachments && message.attachments.length > 0 && (
@@ -94,22 +143,31 @@ export const MessageBubble: React.FC<{
                 <span>重試</span>
               </button>
             )}
-        </div>
+          </div>
 
         {message.artifacts && <div className="mt-2 space-y-2">{message.artifacts.map(a => <FileArtifactCard key={a.id} artifact={a} onPreview={onPreview} />)}</div>}
         
-        <div className={`flex items-center gap-2 mt-1 ${isModel ? 'ml-1' : 'justify-end mr-1'}`}>
+        {/* 時間戳記和狀態 */}
+        <div className={`flex items-center gap-2 mt-1 px-2 ${isModel ? 'justify-start' : 'justify-end'}`}>
           <span className="text-[10px] text-gray-400">
-            {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+            {formatTime(message.timestamp)}
           </span>
-          {!isModel && renderStatusIcon()}
+          {!isModel && (
+            <div className="flex items-center">
+              {renderStatusIcon()}
+            </div>
+          )}
         </div>
       </div>
 
       {/* 用戶頭像 */}
       {!isModel && (
-        <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center ml-2 flex-shrink-0 overflow-hidden mt-1 border-2 border-fairy-primary/20 shadow-sm">
-          {userAvatar ? <img src={userAvatar} className="w-full h-full object-cover" /> : <User className="w-6 h-6 text-fairy-primary" />}
+        <div className="w-10 h-10 rounded-full bg-fairy-primary flex items-center justify-center border-2 border-fairy-primary/30 ml-2 flex-shrink-0 shadow-sm mt-1 overflow-hidden">
+          {userAvatar ? (
+            <img src={userAvatar} alt="User" className="w-full h-full object-cover" />
+          ) : (
+            <User size={22} className="text-white" />
+          )}
         </div>
       )}
     </div>

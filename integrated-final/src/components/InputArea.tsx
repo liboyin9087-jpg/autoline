@@ -227,21 +227,36 @@ export const InputArea: React.FC<{
         )}
         
         {/* 輸入框 */}
-        <div className="flex-1 bg-gray-50 rounded-2xl flex items-center px-4 py-2 border border-gray-100 focus-within:border-yellow-400 focus-within:ring-2 focus-within:ring-yellow-100 transition-all">
+        <div className="flex-1 bg-gray-50 rounded-2xl flex items-center px-4 py-2 border border-gray-100 focus-within:border-yellow-400 focus-within:ring-2 focus-within:ring-yellow-100 transition-all relative">
           <textarea 
             value={text} 
-            onChange={e => setText(e.target.value)} 
+            onChange={e => {
+              const newText = e.target.value;
+              if (newText.length <= 2000) {
+                setText(newText);
+              }
+            }} 
             onKeyDown={e => { 
-              if(e.key==='Enter' && !e.shiftKey) { 
+              if(e.key==='Enter' && !e.shiftKey && !isLoading) { 
                 e.preventDefault(); 
                 handleSend(); 
               }
             }} 
             placeholder={isRecording ? "錄音中..." : "輸入訊息..."} 
             disabled={isLoading || isRecording} 
-            className="w-full bg-transparent border-none outline-none resize-none text-sm py-2 max-h-[120px] text-gray-700 placeholder-gray-400" 
+            className="w-full bg-transparent border-none outline-none resize-none text-sm py-2 max-h-[120px] text-gray-700 placeholder-gray-400 pr-16" 
             rows={1} 
           />
+          
+          {/* 字數統計 */}
+          {text.length > 0 && (
+            <div className={`absolute bottom-2 right-3 text-xs pointer-events-none ${
+              text.length > 1800 ? 'text-red-500 font-semibold' : 
+              text.length > 1500 ? 'text-orange-500' : 'text-gray-400'
+            }`}>
+              {text.length}/2000
+            </div>
+          )}
         </div>
         
         {/* 發送按鈕 (金色) */}
