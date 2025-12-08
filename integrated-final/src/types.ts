@@ -17,6 +17,24 @@ export interface QuickAction {
 
 export interface GenerationOptions { filename?: string; language?: string; }
 
+export interface FairyAffection {
+  persona: AIPersona;
+  level: number;          // 好感度等級 1-10
+  chatCount: number;      // 對話次數
+  specialResponses: string[]; // 好感度達標解鎖的特殊回覆
+  title: string;          // 稱號：陌生人 → 香客 → 弟子 → 道友 → 渡化緣
+  lastInteraction: string; // 最後互動時間
+}
+
+export interface DailyLoginReward {
+  date: string;
+  fairy: AIPersona;
+  fortune: string;
+  luckyColor: string;
+  luckyTime: string;
+  taboo: string;
+}
+
 export interface AppSettings {
   maxOutputTokens: number; 
   persona: AIPersona; 
@@ -27,6 +45,9 @@ export interface AppSettings {
   quickActions?: QuickAction[];
   dailyTokenLimit?: number;
   tokenUsageStats?: { date: string; tokens: number; }[];
+  fairyAffections?: FairyAffection[];
+  dailyLoginRewards?: DailyLoginReward[];
+  lastLoginDate?: string;
 }
 
 export interface FileArtifact { 
