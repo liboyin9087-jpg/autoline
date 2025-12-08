@@ -1,6 +1,9 @@
 import React, { useState, useRef } from 'react';
 import { Send, Plus, SlidersHorizontal, Mic, Smile, X, Filter } from 'lucide-react';
 
+// 常數定義
+const MAX_FILE_UPLOAD_COUNT = 10; // 最大檔案上傳數量
+
 // Emoji 快捷選擇器
 const EMOJI_PRESETS = ['😊', '👍', '❤️', '😂', '🎉', '🙏', '💪', '✨', '🔥', '😎', '🤔', '😭', '😍', '🎊', '💯'];
 
@@ -42,8 +45,8 @@ export const InputArea: React.FC<{
   const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => { 
     if (e.target.files) {
       const newFiles = Array.from(e.target.files);
-      if (selectedFiles.length + newFiles.length > 10) {
-        onShowToast('最多只能上傳 10 個檔案');
+      if (selectedFiles.length + newFiles.length > MAX_FILE_UPLOAD_COUNT) {
+        onShowToast(`最多只能上傳 ${MAX_FILE_UPLOAD_COUNT} 個檔案`);
         return;
       }
       onFilesChange([...selectedFiles, ...newFiles]); 

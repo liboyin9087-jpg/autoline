@@ -348,22 +348,32 @@ export const EasterEggEffectRenderer: React.FC<EasterEggEffectProps> = ({
       {/* 駭客帝國效果 */}
       {showMatrix && (
         <div className="absolute inset-0 bg-black/80 overflow-hidden">
-          {[...Array(20)].map((_, i) => (
-            <div
-              key={i}
-              className="absolute text-green-500 font-mono text-sm animate-matrix-rain"
-              style={{
-                left: `${i * 5}%`,
-                animationDelay: `${Math.random() * 2}s`,
-              }}
-            >
-              {[...Array(20)].map((_, j) => (
-                <div key={j} style={{ opacity: 1 - j * 0.05 }}>
-                  {String.fromCharCode(0x30A0 + Math.random() * 96)}
-                </div>
-              ))}
-            </div>
-          ))}
+          {[...Array(20)].map((_, i) => {
+            // Matrix 字符配置
+            const MATRIX_CONFIG = {
+              KATAKANA_START: 0x30A0,  // Katakana 字符起始位置
+              KATAKANA_RANGE: 96,      // Katakana 字符範圍（涵蓋片假名）
+            };
+            
+            return (
+              <div
+                key={i}
+                className="absolute text-green-500 font-mono text-sm animate-matrix-rain"
+                style={{
+                  left: `${i * 5}%`,
+                  animationDelay: `${Math.random() * 2}s`,
+                }}
+              >
+                {[...Array(20)].map((_, j) => (
+                  <div key={j} style={{ opacity: 1 - j * 0.05 }}>
+                    {String.fromCharCode(
+                      MATRIX_CONFIG.KATAKANA_START + Math.random() * MATRIX_CONFIG.KATAKANA_RANGE
+                    )}
+                  </div>
+                ))}
+              </div>
+            );
+          })}
         </div>
       )}
 
