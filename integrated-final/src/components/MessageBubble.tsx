@@ -3,6 +3,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Message, MessageRole, FileArtifact, MessageStatus } from '../types';
 import { FileArtifactCard } from './FileArtifactCard';
+import { EmotionSticker } from './EmotionSticker';
 import { User, Zap, Check, CheckCheck, AlertCircle, RefreshCw, Paperclip, Copy } from 'lucide-react';
 
 // 格式化時間顯示
@@ -117,6 +118,11 @@ export const MessageBubble: React.FC<{
             <div className={`markdown-container overflow-hidden ${!isModel && 'text-white'}`}>
               <ReactMarkdown remarkPlugins={[remarkGfm]}>{message.text}</ReactMarkdown>
             </div>
+            
+            {/* 😊 情緒表情貼圖（僅 AI 訊息） */}
+            {isModel && message.status === MessageStatus.SENT && (
+              <EmotionSticker text={message.text} className="my-2" />
+            )}
             
             {/* Token 顯示 (只顯示在 AI 回覆且有數據時) */}
             {isModel && message.usage && (
