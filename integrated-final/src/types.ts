@@ -1,29 +1,88 @@
-export enum AppMode {
-  LIFESTYLE = 'lifestyle',
-  PROFESSIONAL = 'professional' // 這裡對應 assistant/tech 等模式
+export enum MessageRole { USER = 'user', MODEL = 'model' }
+export enum AppMode { LIFESTYLE = 'lifestyle', PROFESSIONAL = 'professional' }
+export enum MessageStatus { PENDING = 'pending', SENT = 'sent', FAILED = 'failed' }
+export enum AIPersona {
+  CONSULTANT = 'consultant', FRIEND = 'friend', CONCISE = 'concise', CREATIVE = 'creative', TECH = 'tech'
 }
 
-export enum AIPersona {
-  CONSULTANT = 'consultant', // 智慧仙姑
-  FRIEND = 'beauty',         // 桃花仙子
-  CONCISE = 'concise',       // 閃電娘娘 (未使用，可留作擴充)
-  CREATIVE = 'gossip',       // 茶水仙人 (對應 creative/gossip)
-  TECH = 'tech',             // 天機星君
-  FOOD = 'food'              // 御膳娘娘
+export interface QuickAction {
+  id: string;
+  icon: string;
+  label: string;
+  subLabel: string;
+  colorClass: string;
+  prompt: string;
+  isCustom?: boolean;
+}
+
+export interface GenerationOptions { filename?: string; language?: string; }
+
+export interface AppSettings {
+  maxOutputTokens: number; 
+  persona: AIPersona; 
+  customMemory: string;
+  userAvatar?: string; 
+  enableMic: boolean; 
+  enableEmoji: boolean;
+  quickActions?: QuickAction[];
+  dailyTokenLimit?: number;
+  tokenUsageStats?: { date: string; tokens: number; }[];
+}
+
+export interface FileArtifact { 
+  id: string; 
+  filename: string; 
+  language: string; 
+  content: string; 
+  isComplete: boolean;
+  imageUrl?: string;
+}
+
+export interface TokenUsage { 
+  promptTokens: number; 
+  responseTokens: number; 
+  totalTokens: number; 
+}
+
+export interface Attachment { 
+  id: string; 
+  mimeType: string; 
+  data: string; 
+  filename?: string;
+  size?: number;
 }
 
 export interface Message {
-  id: string;
-  role: 'user' | 'model';
-  text: string;
+  id: string; 
+  role: MessageRole; 
+  text: string; 
   timestamp: Date;
+  status?: MessageStatus;
+  artifacts?: FileArtifact[]; 
+  isThinking?: boolean; 
+  usage?: TokenUsage; 
+  groundingMetadata?: any; 
+  attachments?: Attachment[];
 }
 
-export interface AppSettings {
-  maxOutputTokens: number;
-  persona: string;
-  customMemory: string;
-  userAvatar?: string;
-  enableMic: boolean;
-  enableEmoji: boolean;
+export interface Conversation {
+  id: string;
+  title: string;
+  messages: Message[];
+  createdAt: Date;
+  updatedAt: Date;
+  persona: AIPersona;
+}
+
+export interface ChatState { 
+  messages: Message[]; 
+  isLoading: boolean; 
+  error: string | null; 
+  currentConversationId?: string;
+}
+
+export interface ToastState { 
+  message: string; 
+  type: 'info' | 'error' | 'success' | 'warning'; 
+  isVisible: boolean; 
 }
