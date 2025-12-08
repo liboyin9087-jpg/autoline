@@ -1,5 +1,7 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { X, Sparkles, Share2, RotateCcw, Volume2, VolumeX } from 'lucide-react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { X, Sparkles, Share2, RotateCcw, Volume2, VolumeX, Download } from 'lucide-react';
+import html2canvas from 'html2canvas';
+import QRCode from 'qrcode.react';
 
 // ============================================
 // 神籤系統 - Divine Fortune System
@@ -326,20 +328,78 @@ export const DivineFortune: React.FC<DivineFortuneProps> = ({
     }, 4000);
   }, [isSpinning, wheelRotation, playSound, drawFortune]);
 
-  // 分享功能
-  const handleShare = useCallback(() => {
-    if (!result) return;
+  // 分享圖片生成的 ref
+  const shareCardRef = useRef<HTMLDivElement>(null);
+  const [isGeneratingImage, setIsGeneratingImage] = useState(false);
+
+  // 分享功能 - 增強版：生成精美分享圖
+  const handleShare = useCallback(async () => {
+    if (!result || !shareCardRef.current) return;
     
-    const shareText = `🎋 一池0仙宮 - 天宮籤\n\n第${result.number}籤【${result.level}】\n✨ ${result.title}\n\n「${result.poem}」\n\n📜 ${result.interpretation}\n💡 ${result.advice}\n\n🍀 幸運物：${result.luckyItem}\n🎨 幸運色：${result.luckyColor}\n🧭 幸運方位：${result.luckyDirection}\n\n#一池0仙宮 #仙女籤詩`;
-    
-    if (navigator.share) {
-      navigator.share({
-        title: '一池0仙宮 - 天宮籤',
-        text: shareText,
-      }).catch(() => {});
-    } else {
-      navigator.clipboard.writeText(shareText);
-      alert('籤詩已複製到剪貼簿！');
+    try {
+      setIsGeneratingImage(true);
+      
+      // 使用 html2canvas 將分享卡片轉為圖片
+      const canvas = await html2canvas(shareCardRef.current, {
+        scale: 2,
+        backgroundColor: null,
+        logging: false,
+        useCORS: true,
+      });
+      
+      // 轉換為 blob
+      canvas.toBlob(async (blob) => {
+        if (!blob) {
+          setIsGeneratingImage(false);
+          return;
+        }
+        
+        const file = new File([blob], `仙宮籤_${result.number}.png`, { type: 'image/png' });
+        
+        // 優先使用原生分享 API
+        if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+          try {
+            await navigator.share({
+              files: [file],
+              title: '一池0仙宮 - 天宮籤',
+              text: `我抽到了【${result.level}】✨`
+            });
+          } catch (err) {
+            // 用戶取消分享
+            console.log('分享取消');
+          }
+        } else {
+          // Fallback: 下載圖片
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `仙宮籤_${result.number}.png`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+          
+          alert('✅ 籤詩圖片已下載！');
+        }
+        
+        setIsGeneratingImage(false);
+      }, 'image/png');
+    } catch (error) {
+      console.error('生成分享圖失敗:', error);
+      setIsGeneratingImage(false);
+      
+      // Fallback 到純文字分享
+      const shareText = `🎋 一池0仙宮 - 天宮籤\n\n第${result.number}籤【${result.level}】\n✨ ${result.title}\n\n「${result.poem}」\n\n📜 ${result.interpretation}\n💡 ${result.advice}\n\n🍀 幸運物：${result.luckyItem}\n🎨 幸運色：${result.luckyColor}\n🧭 幸運方位：${result.luckyDirection}\n\n#一池0仙宮 #仙女籤詩`;
+      
+      if (navigator.share) {
+        navigator.share({
+          title: '一池0仙宮 - 天宮籤',
+          text: shareText,
+        }).catch(() => {});
+      } else {
+        navigator.clipboard.writeText(shareText);
+        alert('籤詩已複製到剪貼簿！');
+      }
     }
   }, [result]);
 
