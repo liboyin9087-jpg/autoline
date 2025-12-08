@@ -11,6 +11,9 @@ env:
   SERVICE_NAME: autoline
   REGION: asia-east1
 
+permissions:
+  contents: read
+
 jobs:
   deploy:
     name: Build and Deploy to Cloud Run
