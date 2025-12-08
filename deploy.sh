@@ -86,6 +86,13 @@ echo -e "${BLUE}► 開始建置和部署...${NC}"
 echo -e "${YELLOW}這可能需要 5-10 分鐘，請耐心等待...${NC}"
 echo ""
 
+# 驗證 cloudbuild.yaml 存在
+if [ ! -f "cloudbuild.yaml" ]; then
+    echo -e "${RED}✗ 錯誤：找不到 cloudbuild.yaml 檔案${NC}"
+    echo "請確認您在專案根目錄執行此腳本"
+    exit 1
+fi
+
 gcloud builds submit --config=cloudbuild.yaml
 
 # 取得服務 URL

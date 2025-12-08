@@ -48,6 +48,29 @@ jobs:
           echo "Service URL: ${{ steps.get-url.outputs.url }}"
           echo "Health Check: ${{ steps.get-url.outputs.url }}/api/health"
 
+      - name: Wait for service to be ready
+        run: |
+          echo "Waiting for service to start..."
+          sleep 30
+
       - name: Test health endpoint
         run: |
-          curl -f ${{ steps.get-url.outputs.url }}/api/health || exit 1
+          MAX_RETRIES=5
+          RETRY_COUNT=0
+          RETRY_DELAY=10
+          
+          while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+            echo "Testing health endpoint (attempt $((RETRY_COUNT + 1))/$MAX_RETRIES)..."
+            if curl -f -s ${{ steps.get-url.outputs.url }}/api/health; then
+              echo "✅ Health check passed!"
+              exit 0
+            fi
+            RETRY_COUNT=$((RETRY_COUNT + 1))
+            if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
+              echo "Retrying in ${RETRY_DELAY}s..."
+              sleep $RETRY_DELAY
+            fi
+          done
+          
+          echo "❌ Health check failed after $MAX_RETRIES attempts"
+          exit 1

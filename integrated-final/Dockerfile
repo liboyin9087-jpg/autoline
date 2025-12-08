@@ -1,8 +1,9 @@
 FROM node:20-slim
 WORKDIR /app
-COPY package.json package-lock.json ./
-# 確保安裝 dependencies
-RUN npm ci --only=production
+# Copy package files (package-lock.json is optional but preferred)
+COPY package*.json ./
+# Use npm ci if package-lock.json exists, otherwise use npm install
+RUN if [ -f package-lock.json ]; then npm ci --only=production; else npm install --only=production; fi
 COPY dist ./dist
 COPY public ./public
 COPY server.js ./

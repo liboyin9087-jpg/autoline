@@ -99,10 +99,14 @@ if command -v docker &> /dev/null; then
         read -p "是否要啟動容器進行測試？(y/n) " -n 1 -r
         echo
         if [[ $REPLY =~ ^[Yy]$ ]]; then
+            echo -e "${YELLOW}注意：需要有效的 GOOGLE_API_KEY 才能正常使用 API 功能${NC}"
+            read -p "請輸入您的 Gemini API 金鑰（或按 Enter 使用測試金鑰）: " USER_API_KEY
+            API_KEY=${USER_API_KEY:-"PLACEHOLDER_KEY_FOR_TESTING"}
+            
             echo "啟動容器（按 Ctrl+C 停止）..."
             docker run --rm -p 8080:8080 \
                 -e NODE_ENV=production \
-                -e GOOGLE_API_KEY=test_key \
+                -e GOOGLE_API_KEY="$API_KEY" \
                 autoline-test:local
         fi
     else
