@@ -1,5 +1,10 @@
+# env 檔
 .env
 .env.*
-.env.local
-.env.development
-.env.production
+integrated-final/.env
+integrated-final/.env.*
+
+# 不要追蹤打包檔
+*.tar
+*.zip
+
