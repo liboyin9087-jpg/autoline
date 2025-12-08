@@ -20,11 +20,11 @@ const SYSTEM_INSTRUCTION_BASE = `
 // 根據不同 Persona 優化 Token 使用量（問題4修正）
 const getOptimalTokens = (persona: AIPersona): number => {
   const tokenMap: Record<AIPersona, number> = {
-    [AIPersona.CONCISE]: 512,     // 閃電娘娘：極簡回答
-    [AIPersona.FRIEND]: 1024,      // 桃花仙子：中等長度
-    [AIPersona.CONSULTANT]: 2048,  // 智慧仙姑：詳細分析
-    [AIPersona.CREATIVE]: 3072,    // 雲夢仙子：創意內容
-    [AIPersona.TECH]: 4096         // 天機星君：技術解說
+    [AIPersona.CONCISE]: 512,     // 閃電娘娘：極簡回答（節省 87.5%）
+    [AIPersona.FRIEND]: 1024,      // 桃花仙子：中等長度（節省 75%）
+    [AIPersona.CONSULTANT]: 2048,  // 智慧仙姑：詳細分析（節省 50%）
+    [AIPersona.CREATIVE]: 2660,    // 雲夢仙子：創意內容（節省 35%）
+    [AIPersona.TECH]: 3072         // 天機星君：技術解說（節省 25%）
   };
   return tokenMap[persona] || 2048;
 };
