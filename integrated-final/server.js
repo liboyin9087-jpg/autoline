@@ -88,7 +88,7 @@ app.post('/api/chat', async (req, res) => {
       usage
     });
     
-    res.json({ text, usage });
+    res.json({ reply: text, usage });
   } catch (error) {
     console.error('❌ Server 錯誤:', error);
     res.status(500).json({ 
