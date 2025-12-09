@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X, User, Sparkles, Mic, Smile, SlidersHorizontal, Trash2 } from 'lucide-react';
-import { AppSettings } from '../types';
+import { AppSettings } from '../../types';
 
 interface SettingsModalProps {
   isOpen: boolean;

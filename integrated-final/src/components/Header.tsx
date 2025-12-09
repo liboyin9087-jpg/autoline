@@ -1,6 +1,6 @@
 import React, { useRef, useEffect } from 'react';
 import { Menu, Search, MapPin, Terminal, ArrowLeft, Settings, Users } from 'lucide-react';
-import { AppMode } from '../types';
+import { AppMode } from '../../types';
 
 interface HeaderProps {
   mode: AppMode; onModeChange: (mode: AppMode) => void;

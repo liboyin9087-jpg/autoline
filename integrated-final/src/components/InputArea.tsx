@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { Send, Plus, Smile, Mic, SlidersHorizontal } from 'lucide-react';
-import { GenerationOptions } from '../types';
+import { GenerationOptions } from '../../types';
 
 interface InputAreaProps {
   onSend: (text: string, files: File[], options?: GenerationOptions) => void;

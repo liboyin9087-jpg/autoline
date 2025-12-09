@@ -1,8 +1,8 @@
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { Message, MessageRole, FileArtifact } from '../types';
-import { FileArtifactCard } from './FileArtifactCard';
+import { Message, MessageRole, FileArtifact } from '../../types';
+import { FileArtifactCard } from '../../components/FileArtifactCard';
 import { Bot, User, MapPin, ExternalLink, Coins } from 'lucide-react';
 
 interface MessageBubbleProps {
