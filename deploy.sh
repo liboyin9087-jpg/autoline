@@ -37,7 +37,7 @@ echo ""
 
 # 設定專案
 echo -e "${BLUE}► 設定 GCP 專案...${NC}"
-gcloud config set project $PROJECT_ID
+gcloud config set project "$PROJECT_ID"
 
 # 檢查是否已登入
 if ! gcloud auth list --filter=status:ACTIVE --format="value(account)" | grep -q .; then
@@ -50,6 +50,7 @@ echo -e "${BLUE}► 啟用必要的 API...${NC}"
 gcloud services enable cloudbuild.googleapis.com
 gcloud services enable run.googleapis.com
 gcloud services enable containerregistry.googleapis.com
+gcloud services enable secretmanager.googleapis.com
 echo -e "${GREEN}✓${NC} API 已啟用"
 
 # 詢問是否設定密鑰
@@ -71,7 +72,7 @@ if [[ $REPLY =~ ^[Yy]$ ]]; then
     fi
     
     # 設定權限
-    PROJECT_NUMBER=$(gcloud projects describe $PROJECT_ID --format="value(projectNumber)")
+    PROJECT_NUMBER=$(gcloud projects describe "$PROJECT_ID" --format="value(projectNumber)")
     gcloud secrets add-iam-policy-binding GOOGLE_API_KEY \
         --member="serviceAccount:${PROJECT_NUMBER}-compute@developer.gserviceaccount.com" \
         --role="roles/secretmanager.secretAccessor" \
