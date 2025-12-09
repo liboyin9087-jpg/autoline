@@ -7,6 +7,12 @@ on:
     paths:
       - 'integrated-final/**'
   workflow_dispatch:
+    inputs:
+      force_deploy:
+        description: '強制部署 (忽略路徑過濾)'
+        required: false
+        type: boolean
+        default: false
 
 env:
   PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
@@ -17,6 +23,8 @@ jobs:
   deploy:
     name: Deploy to Cloud Run
     runs-on: ubuntu-latest
+    # 如果是手動觸發且 force_deploy 為 true，或是自動觸發，則執行
+    if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.force_deploy == 'true') || github.event_name == 'workflow_dispatch'
     
     permissions:
       contents: read
@@ -93,9 +101,14 @@ jobs:
 
       - name: Deployment Summary
         run: |
-          echo "## 🚀 Deployment Successful!" >> $GITHUB_STEP_SUMMARY
+          echo "## 🚀 部署成功！" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Service:** $SERVICE_NAME" >> $GITHUB_STEP_SUMMARY
-          echo "**Region:** $REGION" >> $GITHUB_STEP_SUMMARY
-          echo "**URL:** ${{ steps.get-url.outputs.url }}" >> $GITHUB_STEP_SUMMARY
-          echo "**Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "**服務名稱:** $SERVICE_NAME" >> $GITHUB_STEP_SUMMARY
+          echo "**部署區域:** $REGION" >> $GITHUB_STEP_SUMMARY
+          echo "**服務 URL:** ${{ steps.get-url.outputs.url }}" >> $GITHUB_STEP_SUMMARY
+          echo "**提交 SHA:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "**觸發方式:** ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### ✅ 應用程式已成功部署到 Google Cloud Run" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "前往 [${{ steps.get-url.outputs.url }}](${{ steps.get-url.outputs.url }}) 查看您的應用程式" >> $GITHUB_STEP_SUMMARY
