@@ -187,12 +187,14 @@ gcloud builds triggers create github \
     - '--port'
     - '8080'
     - '--set-env-vars'
-    - 'NODE_ENV=production,PORT=8080'
+    - 'NODE_ENV=production,PORT=8080'  # 多個環境變數用逗號分隔
     - '--update-secrets'
     - 'GOOGLE_API_KEY=GOOGLE_API_KEY:latest'
 ```
 
 將映像部署到 Cloud Run，並設定資源、環境變數和 secrets。
+
+**注意**: `--set-env-vars` 參數使用逗號分隔多個環境變數，這是 gcloud 的標準格式。
 
 ## 配置選項
 
@@ -201,12 +203,18 @@ gcloud builds triggers create github \
 編輯 `cloudbuild.yaml` 中的 `--region` 參數：
 
 ```yaml
-- '--region'
-- 'asia-northeast1'  # 東京
-# 或
-- 'asia-southeast1'  # 新加坡
-# 或
-- 'us-central1'      # 美國中部
+args:
+  - 'run'
+  - 'deploy'
+  - 'line-ai-assistant'
+  - '--region'
+  - 'asia-northeast1'  # 改為東京
+  # 或
+  # '--region'
+  # 'asia-southeast1'  # 新加坡
+  # 或
+  # '--region'
+  # 'us-central1'      # 美國中部
 ```
 
 ### 調整資源配置
@@ -227,6 +235,22 @@ gcloud builds triggers create github \
 - '20'      # 最多 20 個實例
 - '--min-instances'
 - '1'       # 最少保持 1 個實例（避免冷啟動）
+```
+
+### 添加或修改環境變數
+
+使用 `--set-env-vars` 參數設定環境變數。多個變數使用逗號分隔（這是 gcloud 的標準格式）：
+
+```yaml
+- '--set-env-vars'
+- 'NODE_ENV=production,PORT=8080,CUSTOM_VAR=value,DEBUG=false'
+```
+
+若要設定單一環境變數：
+
+```yaml
+- '--set-env-vars'
+- 'NODE_ENV=production'
 ```
 
 ### 調整建置機器類型
@@ -371,24 +395,28 @@ Cloud Build 的計費方式：
 
 ### 並行建置
 
-修改 `cloudbuild.yaml` 以並行執行多個步驟：
+修改 `cloudbuild.yaml` 以並行執行多個步驟。使用 `waitFor` 欄位控制步驟執行順序：
 
 ```yaml
 steps:
+  # 這個步驟會立即執行
   - name: 'step-1'
     id: 'step-1'
     # ...
 
+  # 這個步驟也會立即執行（與 step-1 並行）
   - name: 'step-2'
     id: 'step-2'
-    waitFor: ['-']  # 不等待任何步驟
-    # ...
+    # ... (沒有 waitFor 欄位，或使用空列表)
 
+  # 這個步驟等待 step-1 和 step-2 都完成後才執行
   - name: 'step-3'
     id: 'step-3'
-    waitFor: ['step-1', 'step-2']  # 等待特定步驟完成
+    waitFor: ['step-1', 'step-2']
     # ...
 ```
+
+**注意**: 預設情況下，每個步驟會等待前一個步驟完成。若要並行執行，需明確指定 `waitFor` 欄位。
 
 ### 使用替代變數
 
