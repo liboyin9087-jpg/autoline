@@ -34,6 +34,7 @@ gcloud builds submit --config=cloudbuild.yaml
 ### 詳細文件
 
 - [🚀 快速部署指南](integrated-final/QUICK_DEPLOY.md) - 如何立即部署最新內容 ⭐
+- [☁️ Cloud Build 部署指南](CLOUDBUILD_GUIDE.md) - Google Cloud Build 完整說明
 - [GitHub Actions 設定指南](.github/ACTIONS_SETUP.md) - 完整的 CI/CD 設定說明
 - [應用程式文件](integrated-final/README.md) - LINE AI 助理功能說明
 - [Cloud Run 部署指南](integrated-final/CLOUD_RUN_DEPLOYMENT.md) - GCP 部署詳細步驟
