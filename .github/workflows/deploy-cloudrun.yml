@@ -18,6 +18,8 @@ env:
   PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
   REGION: asia-east1
   SERVICE_NAME: line-ai-assistant
+  # Optional: Add API URL if needed by your application
+  API_URL: ${{ secrets.API_URL }}
 
 jobs:
   deploy:
@@ -49,35 +51,58 @@ jobs:
         working-directory: integrated-final
         run: npm run build
 
+      # Authentication: Use EITHER Workload Identity Federation (recommended) OR Service Account JSON key
+      # Method A (Recommended): Workload Identity Federation
+      #   - Set secrets: WORKLOAD_IDENTITY_PROVIDER, SERVICE_ACCOUNT_EMAIL, GCP_PROJECT_ID
+      #   - Uncomment the workload_identity_provider and service_account blocks below
+      # Method B (Quick setup): Service Account JSON key
+      #   - Set secret: GCP_SA_KEY (complete JSON key file content)
+      #   - Keep the credentials_json block below (currently active)
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v3
         with:
+          # Method B: Service Account JSON key (currently active)
+          # Comment out this line if using Workload Identity Federation
           credentials_json: ${{ secrets.GCP_SA_KEY }}
+          
+          # Method A: Workload Identity Federation (recommended for production)
+          # Uncomment these two lines and comment out credentials_json above to use WIF:
+          # workload_identity_provider: ${{ secrets.WORKLOAD_IDENTITY_PROVIDER }}
+          # service_account: ${{ secrets.SERVICE_ACCOUNT_EMAIL }}
 
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v3
+        with:
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
 
       - name: Configure Docker for GCR
-        run: gcloud auth configure-docker
+        run: |
+          gcloud auth configure-docker --project="${PROJECT_ID}"
+          echo "PROJECT_ID=${PROJECT_ID}"
+          echo "Configured Docker for project: ${PROJECT_ID}"
 
       - name: Build Docker image
         working-directory: integrated-final
         run: |
+          echo "Building Docker image for project: ${PROJECT_ID}"
           docker build \
-            -t gcr.io/$PROJECT_ID/$SERVICE_NAME:${{ github.sha }} \
-            -t gcr.io/$PROJECT_ID/$SERVICE_NAME:latest \
+            -t gcr.io/${PROJECT_ID}/${SERVICE_NAME}:${{ github.sha }} \
+            -t gcr.io/${PROJECT_ID}/${SERVICE_NAME}:latest \
             .
 
       - name: Push Docker image
         run: |
-          docker push gcr.io/$PROJECT_ID/$SERVICE_NAME:${{ github.sha }}
-          docker push gcr.io/$PROJECT_ID/$SERVICE_NAME:latest
+          echo "Pushing Docker images for project: ${PROJECT_ID}"
+          docker push gcr.io/${PROJECT_ID}/${SERVICE_NAME}:${{ github.sha }}
+          docker push gcr.io/${PROJECT_ID}/${SERVICE_NAME}:latest
 
       - name: Deploy to Cloud Run
         run: |
-          gcloud run deploy $SERVICE_NAME \
-            --image gcr.io/$PROJECT_ID/$SERVICE_NAME:${{ github.sha }} \
-            --region $REGION \
+          echo "Deploying ${SERVICE_NAME} to project: ${PROJECT_ID} in region: ${REGION}"
+          gcloud run deploy ${SERVICE_NAME} \
+            --project="${PROJECT_ID}" \
+            --image gcr.io/${PROJECT_ID}/${SERVICE_NAME}:${{ github.sha }} \
+            --region ${REGION} \
             --platform managed \
             --allow-unauthenticated \
             --memory 512Mi \
@@ -93,8 +118,9 @@ jobs:
       - name: Get service URL
         id: get-url
         run: |
-          SERVICE_URL=$(gcloud run services describe $SERVICE_NAME \
-            --region $REGION \
+          SERVICE_URL=$(gcloud run services describe ${SERVICE_NAME} \
+            --project="${PROJECT_ID}" \
+            --region ${REGION} \
             --format 'value(status.url)')
           echo "Service deployed at: $SERVICE_URL"
           echo "url=$SERVICE_URL" >> $GITHUB_OUTPUT
