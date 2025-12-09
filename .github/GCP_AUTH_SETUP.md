@@ -36,8 +36,8 @@ gcloud services enable secretmanager.googleapis.com
 export PROJECT_ID="your-gcp-project-id"
 export POOL_NAME="github-actions-pool"
 export PROVIDER_NAME="github-provider"
-export REPO_OWNER="liboyin9087-jpg"
-export REPO_NAME="autoline"
+export REPO_OWNER="your-github-username"
+export REPO_NAME="your-repo-name"
 
 # 建立 Workload Identity Pool
 gcloud iam workload-identity-pools create "${POOL_NAME}" \
@@ -243,10 +243,12 @@ gcloud iam service-accounts keys list \
 
 ## 關於使用 Compute Engine 預設 Service Account
 
-您提到的 Service Account：
+Compute Engine 預設 Service Account 的格式通常是：
 ```
-970949752172-compute@developer.gserviceaccount.com
+PROJECT_NUMBER-compute@developer.gserviceaccount.com
 ```
+
+例如：`970949752172-compute@developer.gserviceaccount.com`
 
 這是 **Compute Engine 的預設 Service Account**。
 
@@ -266,23 +268,29 @@ gcloud iam service-accounts keys list \
    
    **方案 A（Workload Identity Federation）：**
    ```bash
-   # 授權 WIF 使用預設 SA
-   export COMPUTE_SA="970949752172-compute@developer.gserviceaccount.com"
+   # 取得專案編號
+   export PROJECT_NUMBER=$(gcloud projects describe "${PROJECT_ID}" --format="value(projectNumber)")
+   export COMPUTE_SA="${PROJECT_NUMBER}-compute@developer.gserviceaccount.com"
    
+   # 授權 WIF 使用預設 SA
    gcloud iam service-accounts add-iam-policy-binding "${COMPUTE_SA}" \
      --project="${PROJECT_ID}" \
      --role="roles/iam.workloadIdentityUser" \
      --member="principalSet://iam.googleapis.com/${WORKLOAD_IDENTITY_POOL_ID}/attribute.repository/${REPO_OWNER}/${REPO_NAME}"
    
    # 在 GitHub 設定
-   # SERVICE_ACCOUNT_EMAIL = 970949752172-compute@developer.gserviceaccount.com
+   # SERVICE_ACCOUNT_EMAIL = ${PROJECT_NUMBER}-compute@developer.gserviceaccount.com
    ```
 
    **方案 B（JSON Key）：**
    ```bash
+   # 取得專案編號
+   export PROJECT_NUMBER=$(gcloud projects describe "${PROJECT_ID}" --format="value(projectNumber)")
+   export COMPUTE_SA="${PROJECT_NUMBER}-compute@developer.gserviceaccount.com"
+   
    # 為預設 SA 建立金鑰
    gcloud iam service-accounts keys create compute-key.json \
-     --iam-account="970949752172-compute@developer.gserviceaccount.com"
+     --iam-account="${COMPUTE_SA}"
    
    # 將 compute-key.json 內容設定為 GCP_SA_KEY secret
    ```
@@ -306,9 +314,10 @@ gcloud secrets add-iam-policy-binding GOOGLE_API_KEY \
   --role="roles/secretmanager.secretAccessor"
 
 # 如果使用 Compute Engine 預設 SA
+export PROJECT_NUMBER=$(gcloud projects describe "${PROJECT_ID}" --format="value(projectNumber)")
 gcloud secrets add-iam-policy-binding GOOGLE_API_KEY \
   --project="${PROJECT_ID}" \
-  --member="serviceAccount:970949752172-compute@developer.gserviceaccount.com" \
+  --member="serviceAccount:${PROJECT_NUMBER}-compute@developer.gserviceaccount.com" \
   --role="roles/secretmanager.secretAccessor"
 ```
 

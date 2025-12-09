@@ -18,7 +18,8 @@ env:
   PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
   REGION: asia-east1
   SERVICE_NAME: line-ai-assistant
-  # Optional: Add API URL if needed by your application
+  # Optional: API_URL for application configuration (if your app needs an external API endpoint)
+  # Set this secret only if your application requires it
   API_URL: ${{ secrets.API_URL }}
 
 jobs:
