@@ -86,10 +86,10 @@ gcloud run services update line-ai-assistant \
 
 ### 步驟 5: 關閉 GitHub 安全警報 ✅
 
-1. 前往您的儲存庫：https://github.com/liboyin9087-jpg/autoline
+1. 前往您的 GitHub 儲存庫
 2. 點擊「Security」標籤
 3. 選擇「Secret scanning」
-4. 找到關於 `AIzaSyD3r0aKpNacGnDDRizTynQjoPMOTdhmLWg` 的警報
+4. 找到關於洩漏 API 金鑰的警報
 5. 點擊警報以開啟詳細資訊
 6. 選擇「Close as」→「Revoked」
 7. 新增註解說明金鑰已被撤銷和更換

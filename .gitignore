@@ -1,15 +1,10 @@
 # env 檔
 .env
 .env.*
-.env.local
-.env.backup
-.env.backu
 *.env
 *.env.*
 integrated-final/.env
 integrated-final/.env.*
-integrated-final/.env.backup
-integrated-final/.env.backu
 
 # 不要追蹤打包檔
 *.tar
