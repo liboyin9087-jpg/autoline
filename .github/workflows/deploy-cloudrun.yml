@@ -23,8 +23,8 @@ jobs:
   deploy:
     name: Deploy to Cloud Run
     runs-on: ubuntu-latest
-    # 如果是手動觸發且 force_deploy 為 true，或是自動觸發，則執行
-    if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.force_deploy == 'true') || github.event_name == 'workflow_dispatch'
+    # 自動推送或手動觸發時執行
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
     
     permissions:
       contents: read

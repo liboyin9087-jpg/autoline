@@ -99,7 +99,7 @@ git push origin main
 - `GCP_SA_KEY` - Google Cloud 服務帳號金鑰 (JSON)
 - `GCP_PROJECT_ID` - GCP 專案 ID
 
-詳細設定步驟請參考 [ACTIONS_SETUP.md](../.github/ACTIONS_SETUP.md)
+詳細設定步驟請參考 [ACTIONS_SETUP.md](/.github/ACTIONS_SETUP.md)
 
 ## 常見問題
 
