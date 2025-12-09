@@ -8,3 +8,27 @@ integrated-final/.env.*
 *.tar
 *.zip
 
+# Node modules and build artifacts
+node_modules/
+dist/
+.cache/
+
+# 備份和臨時檔案
+*.backup
+*.broken
+*.log
+*.tmp
+*.bak
+*~
+
+# 開發測試檔案
+*.godmode.*
+*.test.local.*
+
+# IDE 和編輯器
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
