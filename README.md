@@ -19,6 +19,18 @@
 
 前往 [Actions](../../actions) → **Auto Deploy Updates** → 點擊 **Run workflow** 即可立即部署最新內容到 Cloud Run。
 
+### 部署方式
+
+#### 使用 GitHub Actions（推薦）
+前往 [Actions](../../actions) 頁面，選擇相應的工作流程即可自動部署。
+
+#### 使用 Google Cloud Build
+專案根目錄提供 `cloudbuild.yaml` 配置文件，可直接使用 Google Cloud Build 進行部署：
+
+```bash
+gcloud builds submit --config=cloudbuild.yaml
+```
+
 ### 詳細文件
 
 - [🚀 快速部署指南](integrated-final/QUICK_DEPLOY.md) - 如何立即部署最新內容 ⭐
@@ -37,6 +49,7 @@ autoline/
 │   │   ├── auto-update.yml          # 依賴更新
 │   │   └── ci.yml                   # CI 測試
 │   └── ACTIONS_SETUP.md    # Actions 設定文件
+├── cloudbuild.yaml         # Google Cloud Build 配置
 └── integrated-final/       # LINE AI 助理應用程式
     ├── src/                # 前端源碼
     ├── server.js           # 後端服務
