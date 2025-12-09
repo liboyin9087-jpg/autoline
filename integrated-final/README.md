@@ -1,5 +1,9 @@
 # 仙女下凡來點名 - LINE AI 助理完整整合版
 
+[![部署狀態](https://github.com/liboyin9087-jpg/autoline/actions/workflows/deploy-cloudrun.yml/badge.svg)](https://github.com/liboyin9087-jpg/autoline/actions/workflows/deploy-cloudrun.yml)
+
+> 💡 **想要立即部署？** 查看 [快速部署指南](QUICK_DEPLOY.md)
+
 這是一個功能完整的 LINE 風格 AI 助理應用程式，整合了三大娛樂性功能以及所有核心管理功能，為用戶提供最佳的互動體驗。
 
 ## 核心功能特色

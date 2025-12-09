@@ -10,7 +10,7 @@
 
 **觸發條件：**
 - 當推送到 `main` 分支且 `integrated-final/` 目錄有變更時
-- 手動觸發（workflow_dispatch）
+- 手動觸發（workflow_dispatch），可選擇強制部署
 
 **功能：**
 - 安裝依賴並建置前端
@@ -18,6 +18,47 @@
 - 推送到 Google Container Registry
 - 部署到 Cloud Run
 - 輸出部署 URL
+
+### 2. Auto Deploy Updates (auto-deploy.yml) ⭐ 新增
+
+自動化部署最新內容到 Cloud Run。
+
+**觸發條件：**
+- 當帶有 `automated` 標籤的 PR 合併到 `main` 分支時（如依賴套件更新）
+- 手動觸發，立即部署最新內容
+
+**功能：**
+- 自動偵測依賴套件更新的 PR 合併
+- 合併後立即觸發部署流程
+- 提供手動觸發選項，快速部署最新內容
+- 完整的建置、推送、部署流程
+
+### 3. Auto Update Dependencies (auto-update.yml)
+
+每週自動檢查並更新依賴套件。
+
+**觸發條件：**
+- 每週一早上 9:00 (UTC)
+- 手動觸發（workflow_dispatch）
+
+**功能：**
+- 檢查過期的套件
+- 自動更新 patch 和 minor 版本
+- 執行建置測試
+- 建立 PR 供審查
+
+### 4. CI - Test and Lint (ci.yml)
+
+持續整合測試和建置。
+
+**觸發條件：**
+- 任何分支推送且 `integrated-final/` 有變更
+- Pull Request 建立且 `integrated-final/` 有變更
+
+**功能：**
+- 安裝依賴
+- 建置專案
+- 上傳建置成果
 
 ## 設定步驟
 
@@ -85,6 +126,8 @@ gcloud services enable secretmanager.googleapis.com
 
 ### 自動部署
 
+#### 方式 1: 推送代碼自動部署
+
 當您推送代碼到 `main` 分支，並且 `integrated-final/` 目錄有變更時，Actions 會自動執行部署。
 
 ```bash
@@ -93,12 +136,36 @@ git commit -m "Update application"
 git push origin main
 ```
 
+#### 方式 2: 依賴更新自動部署
+
+每週自動更新會檢查並更新依賴套件，建立 PR。當您審查並合併該 PR 後，系統會自動觸發部署。
+
+1. 等待每週一的自動更新（或手動觸發 Auto Update Dependencies）
+2. 審查自動建立的 PR
+3. 合併 PR
+4. 系統自動部署最新版本
+
 ### 手動觸發
+
+#### 方式 1: 手動部署最新內容（推薦）⭐
+
+使用 **Auto Deploy Updates** workflow 快速部署最新內容：
+
+1. 前往 GitHub 儲存庫的「Actions」分頁
+2. 選擇「Auto Deploy Updates」工作流程
+3. 點擊「Run workflow」
+4. 確保「立即部署最新內容到 Cloud Run」選項為 true
+5. 點擊「Run workflow」
+
+這是最快速部署最新內容的方式！
+
+#### 方式 2: 使用基本部署 workflow
 
 1. 前往 GitHub 儲存庫的「Actions」分頁
 2. 選擇「Deploy to Cloud Run」工作流程
 3. 點擊「Run workflow」
-4. 選擇分支並點擊「Run workflow」
+4. 選擇分支並設定是否強制部署
+5. 點擊「Run workflow」
 
 ## 監控部署
 
@@ -251,6 +318,66 @@ env:
 3. **監控使用量**
    - 定期檢查 Cloud Run 使用量
    - 設定預算警報
+
+## 自動化部署流程
+
+### 完整的自動化更新與部署流程
+
+本專案現在支援完整的自動化更新與部署流程：
+
+```mermaid
+graph TD
+    A[每週一自動檢查更新] --> B{有可用更新?}
+    B -->|是| C[建立 PR with automated label]
+    B -->|否| D[結束]
+    C --> E[人工審查 PR]
+    E --> F[合併 PR 到 main]
+    F --> G[自動觸發 Auto Deploy Updates]
+    G --> H[建置並部署到 Cloud Run]
+    H --> I[部署完成]
+```
+
+### 流程說明
+
+1. **自動檢查更新**
+   - 每週一早上 9:00 UTC，`auto-update.yml` 自動執行
+   - 檢查 `integrated-final/` 目錄中的套件是否有更新
+   - 如有更新，執行 `npm update` 並建置測試
+
+2. **建立 PR**
+   - 如果建置成功，自動建立帶有 `automated` 標籤的 PR
+   - PR 標題：「🤖 自動更新依賴套件」
+   - 包含詳細的更新資訊和檢查清單
+
+3. **人工審查**
+   - 開發人員審查 PR 中的變更
+   - 確認沒有破壞性變更
+   - 必要時進行額外測試
+
+4. **自動部署**
+   - 當帶有 `automated` 標籤的 PR 合併到 main 後
+   - `auto-deploy.yml` 自動觸發
+   - 完整執行建置、推送、部署流程
+   - 部署最新版本到 Cloud Run
+
+### 優勢
+
+- ✅ **完全自動化**：從檢查更新到部署，只需審查和合併 PR
+- ✅ **安全可靠**：每個步驟都有建置測試和驗證
+- ✅ **即時部署**：PR 合併後立即部署，無需等待
+- ✅ **手動控制**：仍保留手動觸發選項，靈活應對需求
+- ✅ **清晰追蹤**：每次部署都有完整的日誌和 Summary
+
+### 快速部署最新內容
+
+如果您需要立即部署最新內容而不想等待自動流程：
+
+1. 前往 Actions → Auto Deploy Updates
+2. 點擊 Run workflow
+3. 確保「立即部署最新內容到 Cloud Run」為 true
+4. 點擊執行
+
+系統會立即將 main 分支的最新內容部署到 Cloud Run。
 
 ## 相關文件
 
