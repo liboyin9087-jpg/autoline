@@ -8,3 +8,7 @@ integrated-final/.env.*
 *.tar
 *.zip
 
+
+# Build outputs and dependencies
+integrated-final/node_modules/
+integrated-final/dist/

@@ -11,6 +11,10 @@ import { QuickActionsManager } from './components/QuickActionsManager';
 import { DivineFortune } from './components/DivineFortune';
 import { FairyGroupChat, GroupChatTrigger } from './components/FairyGroupChat';
 import { EasterEggEffectRenderer, EasterEggToast, useEasterEgg } from './components/EasterEggSystem';
+import { DailyLoginModal } from './components/DailyLoginModal';
+import { EmotionSticker } from './components/EmotionSticker';
+import { AffectionDisplay } from './components/AffectionDisplay';
+import { useFairyAffection } from './hooks/useFairyAffection';
 import { Message, MessageRole, AppMode, ToastState, AppSettings, AIPersona, MessageStatus, QuickAction, Conversation } from './types';
 import { sendMessageToGemini } from './services/geminiService';
 import { extractArtifacts } from './utils/parser';
@@ -123,6 +127,26 @@ const App: React.FC = () => {
     setShowToast: setShowEasterEggToast,
     triggeredEgg
   } = useEasterEgg();
+  
+  // 好感度系統
+  const { affections, incrementChatCount, getAffection } = useFairyAffection();
+  
+  // 每日登入儀式
+  const [showDailyLogin, setShowDailyLogin] = useState(false);
+  
+  // 檢查每日登入
+  useEffect(() => {
+    const lastLoginDate = localStorage.getItem('last_login_date');
+    const today = new Date().toDateString();
+    
+    if (lastLoginDate !== today) {
+      // 首次開啟或新的一天
+      setTimeout(() => {
+        setShowDailyLogin(true);
+        localStorage.setItem('last_login_date', today);
+      }, 1000); // 延遲1秒顯示，給應用時間載入
+    }
+  }, []);
 
   // 載入設定和對話歷史
   useEffect(() => { 
@@ -328,6 +352,9 @@ const App: React.FC = () => {
       
       setMessages(prev => [...prev, newModelMsg]);
       
+      // 💝 增加好感度
+      incrementChatCount(settings.persona);
+      
       // 更新 Token 統計
       if (usage) {
         setCurrentSessionTokens(prev => prev + usage.totalTokens);
@@ -528,6 +555,31 @@ const App: React.FC = () => {
         onSendAllResponses={handleGroupChatAllResponses}
       />
       
+      {/* ☁️ 每日登入儀式 Modal */}
+      <DailyLoginModal
+        isOpen={showDailyLogin}
+        onClose={() => setShowDailyLogin(false)}
+        onSelectPersona={(persona) => {
+          setSettings(prev => ({ ...prev, persona }));
+          setShowDailyLogin(false);
+        }}
+        personaData={PERSONA_DATA}
+      />
+      
+      {/* 💝 好感度顯示（設定頁可見） */}
+      {isSettingsOpen && (
+        <div className="fixed inset-0 z-50 pointer-events-none">
+          <div className="absolute top-20 right-4 pointer-events-auto">
+            <AffectionDisplay
+              persona={settings.persona}
+              affection={getAffection(settings.persona)}
+              personaName={currentPersona.name}
+              personaColor={currentPersona.color}
+            />
+          </div>
+        </div>
+      )}
+      
       <main className="flex-1 overflow-y-auto w-full max-w-4xl mx-auto p-4 pb-20 scrollbar-hide">
         {messages.length <= 1 && !isLoading && (
           <div className="flex flex-col items-center justify-center animate-fade-in mt-6 mb-8">
@@ -600,8 +652,12 @@ const App: React.FC = () => {
         
         {isLoading && (
           <div className="flex justify-center my-4">
-            <div className="bg-white/80 backdrop-blur px-5 py-2 rounded-full text-fairy-primary text-sm flex items-center gap-2 shadow-soft border border-fairy-primary/10 animate-pulse">
-              <span className="animate-bounce text-lg">✨</span>
+            <div className="bg-white/80 backdrop-blur px-5 py-3 rounded-full text-fairy-primary text-sm flex items-center gap-3 shadow-soft border border-fairy-primary/10">
+              <div className="flex gap-1">
+                <div className="w-2 h-2 bg-fairy-primary rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                <div className="w-2 h-2 bg-fairy-primary rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                <div className="w-2 h-2 bg-fairy-primary rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+              </div>
               <span>{PERSONA_UI_CONFIG[settings.persona]?.loading}</span>
             </div>
           </div>
