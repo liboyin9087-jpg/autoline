@@ -1,10 +1,24 @@
 # env 檔
 .env
 .env.*
+.env.local
+.env.backup
+.env.backu
+*.env
+*.env.*
 integrated-final/.env
 integrated-final/.env.*
+integrated-final/.env.backup
+integrated-final/.env.backu
 
 # 不要追蹤打包檔
 *.tar
+*.tar.gz
+*.tgz
 *.zip
+
+# 不要追蹤包含敏感資料的壓縮檔
+*-integrated-final.tar
+*integrated-final*.tar
+line-ai-*.tar
 
