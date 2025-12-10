@@ -3,10 +3,15 @@
 /**
  * 圖片位置驗證工具
  * 檢查所有功能圖片是否存在於正確位置
+ * 支援 --fix 選項自動修復缺失的圖片
  */
 
 const fs = require('fs');
 const path = require('path');
+
+// 檢查是否啟用修復模式
+const args = process.argv.slice(2);
+const FIX_MODE = args.includes('--fix');
 
 const colors = {
   reset: '\x1b[0m',
@@ -16,8 +21,49 @@ const colors = {
   blue: '\x1b[34m'
 };
 
+/**
+ * 嘗試從 dist/assets 目錄中找到並複製哈希化的圖片檔案
+ * @param {string} imageName - 原始圖片檔名
+ * @param {string} location - 目標位置 (通常是 'dist')
+ * @returns {boolean} - 是否成功修復
+ */
+function tryFixImage(imageName, location) {
+  const assetsDir = path.join(__dirname, location, 'assets');
+  const targetPath = path.join(__dirname, location, imageName);
+  
+  // 檢查 assets 目錄是否存在
+  if (!fs.existsSync(assetsDir)) {
+    return false;
+  }
+  
+  try {
+    // 獲取圖片檔名（不含副檔名）和副檔名
+    const extname = path.extname(imageName);
+    const basename = path.basename(imageName, extname);
+    
+    // 讀取 assets 目錄中的所有檔案
+    const files = fs.readdirSync(assetsDir);
+    
+    // 尋找匹配的哈希化檔案 (例如: fairy_consultant.abc123.png)
+    const hashedFile = files.find(file => {
+      // 檢查檔案是否以原始檔名開頭，並以相同副檔名結尾
+      return file.startsWith(basename + '.') && file.endsWith(extname);
+    });
+    
+    if (hashedFile) {
+      const sourcePath = path.join(assetsDir, hashedFile);
+      fs.copyFileSync(sourcePath, targetPath);
+      return true;
+    }
+  } catch (error) {
+    // 忽略錯誤，返回 false
+  }
+  
+  return false;
+}
+
 console.log(`${colors.blue}========================================${colors.reset}`);
-console.log(`${colors.blue}    圖片位置驗證工具${colors.reset}`);
+console.log(`${colors.blue}    圖片位置驗證工具${FIX_MODE ? ' (修復模式)' : ''}${colors.reset}`);
 console.log(`${colors.blue}========================================${colors.reset}\n`);
 
 // 定義需要檢查的圖片及其對應功能
@@ -78,7 +124,19 @@ IMAGE_MAPPINGS.forEach((mapping, index) => {
       passedChecks++;
     } else {
       console.log(`   ${colors.red}✗${colors.reset} /${location}/${mapping.name} (不存在)`);
-      allPassed = false;
+      
+      // 在修復模式下嘗試修復
+      if (FIX_MODE && location === 'dist') {
+        const fixed = tryFixImage(mapping.name, location);
+        if (fixed) {
+          console.log(`   ${colors.green}→ 已從 assets 修復${colors.reset}`);
+          passedChecks++;
+        } else {
+          allPassed = false;
+        }
+      } else {
+        allPassed = false;
+      }
     }
   });
 
@@ -131,6 +189,10 @@ if (allPassed) {
   console.log('❌ 請檢查以下項目：');
   console.log('   1. public 目錄是否包含所有必要圖片？');
   console.log('   2. 是否已執行 npm run build 建置前端？');
-  console.log('   3. 圖片檔名是否正確（區分大小寫）？\n');
+  console.log('   3. 圖片檔名是否正確（區分大小寫）？');
+  if (!FIX_MODE) {
+    console.log('\n💡 提示：可使用 --fix 選項自動修復 dist 目錄中的圖片');
+    console.log('   執行：npm run fix:images\n');
+  }
   process.exit(1);
 }

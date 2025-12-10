@@ -11,6 +11,7 @@
     "start": "node server.js",
     "check:connection": "node check-connection.cjs",
     "check:images": "node check-images.cjs",
+    "fix:images": "node check-images.cjs --fix",
     "check:all": "npm run check:images && npm run check:connection"
   },
   "dependencies": {
