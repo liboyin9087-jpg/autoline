@@ -47,7 +47,9 @@ function tryFixImage(imageName, location) {
     // 尋找匹配的哈希化檔案 (例如: fairy_consultant.abc123.png)
     const hashedFile = files.find(file => {
       // 檢查檔案是否以原始檔名開頭，並以相同副檔名結尾
-      return file.startsWith(basename + '.') && file.endsWith(extname);
+      // 哈希部分應該是字母數字組合，避免匹配非哈希檔案如 .backup.png
+      const pattern = new RegExp(`^${basename}\\.[a-f0-9]+${extname.replace('.', '\\.')}$`, 'i');
+      return pattern.test(file);
     });
     
     if (hashedFile) {
@@ -56,7 +58,8 @@ function tryFixImage(imageName, location) {
       return true;
     }
   } catch (error) {
-    // 忽略錯誤，返回 false
+    // 檔案操作失敗（例如：權限問題或檔案系統錯誤）
+    // 靜默處理，因為我們會在主要檢查中報告問題
   }
   
   return false;
