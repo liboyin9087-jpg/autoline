@@ -1,12 +1,12 @@
 steps:
-  # Step 1: Install dependencies
+  # 步驟 1: 安裝依賴
   - name: 'node:20-slim'
     entrypoint: npm
     args: ['install']
     dir: 'integrated-final'
     id: 'install-dependencies'
 
-  # Step 2: Build the frontend
+  # 步驟 2: 建置前端
   - name: 'node:20-slim'
     entrypoint: npm
     args: ['run', 'build']
@@ -14,7 +14,7 @@ steps:
     id: 'build-frontend'
     waitFor: ['install-dependencies']
 
-  # Step 3: Build the Docker image
+  # 步驟 3: 建立 Docker 映像檔
   - name: 'gcr.io/cloud-builders/docker'
     args:
       - 'build'
@@ -27,7 +27,7 @@ steps:
     id: 'build-docker-image'
     waitFor: ['build-frontend']
 
-  # Step 4: Push the Docker image to Container Registry
+  # 步驟 4: 推送映像檔
   - name: 'gcr.io/cloud-builders/docker'
     args:
       - 'push'
@@ -35,7 +35,7 @@ steps:
     id: 'push-docker-image'
     waitFor: ['build-docker-image']
 
-  # Step 5: Push the latest tag
+  # 步驟 5: 推送 Latest 標籤
   - name: 'gcr.io/cloud-builders/docker'
     args:
       - 'push'
@@ -43,7 +43,7 @@ steps:
     id: 'push-latest-tag'
     waitFor: ['build-docker-image']
 
-  # Step 6: Deploy to Cloud Run
+  # 步驟 6: 部署到 Cloud Run
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     entrypoint: gcloud
     args:
@@ -66,7 +66,7 @@ steps:
       - '--set-env-vars'
       - 'NODE_ENV=production,PORT=8080'
       - '--update-secrets'
-      - 'GOOGLE_API_KEY=GOOGLE_API_KEY:latest'
+      - 'GOOGLE_API_KEY=GOOGLE_API_KEY:latest' # 這裡已經有設定密鑰給 Cloud Run 了，所以很安全
       - '--max-instances'
       - '10'
       - '--min-instances'
@@ -75,12 +75,6 @@ steps:
       - '300'
     id: 'deploy-cloud-run'
     waitFor: ['push-docker-image']
-
-# Available secrets for the build process
-availableSecrets:
-  secretManager:
-    - versionName: projects/$PROJECT_ID/secrets/GOOGLE_API_KEY/versions/latest
-      env: 'GOOGLE_API_KEY'
 
 images:
   - 'gcr.io/$PROJECT_ID/line-ai-assistant:$BUILD_ID'
