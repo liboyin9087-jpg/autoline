@@ -2,12 +2,17 @@ import express from 'express';
 import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { readFileSync } from 'fs';
 import dotenv from 'dotenv';
 
 dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+// 讀取版本號從 package.json
+const packageJson = JSON.parse(readFileSync(path.join(__dirname, 'package.json'), 'utf-8'));
+const VERSION = packageJson.version;
 
 const app = express();
 const PORT = process.env.PORT || 8080;
@@ -39,7 +44,7 @@ app.get('/api/status', (req, res) => {
     port: PORT,
     environment: process.env.NODE_ENV || 'development',
     timestamp: new Date().toISOString(),
-    version: '2.0.0'
+    version: VERSION
   });
 });
 

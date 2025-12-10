@@ -23,7 +23,7 @@ console.log(`${colors.blue}========================================${colors.rese
 console.log('📋 檢查環境變數...');
 const apiKey = process.env.GOOGLE_API_KEY;
 if (apiKey) {
-  console.log(`${colors.green}✓${colors.reset} GOOGLE_API_KEY 已設定 (長度: ${apiKey.length})`);
+  console.log(`${colors.green}✓${colors.reset} GOOGLE_API_KEY 已設定`);
 } else {
   console.log(`${colors.yellow}⚠${colors.reset} GOOGLE_API_KEY 未設定 (可能從秘密變數讀取)`);
 }
