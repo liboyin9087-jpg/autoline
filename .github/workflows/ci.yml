@@ -1,0 +1,66 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - '**'
+    paths:
+      - 'integrated-final/**'
+  pull_request:
+    paths:
+      - 'integrated-final/**'
+
+jobs:
+  test-and-build:
+    name: 測試與建置
+    runs-on: ubuntu-latest
+    
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: integrated-final/package-lock.json
+
+      - name: Install dependencies
+        working-directory: integrated-final
+        run: npm ci
+
+      - name: Build project
+        working-directory: integrated-final
+        run: npm run build
+
+      - name: Check build output
+        working-directory: integrated-final
+        run: |
+          if [ -d "dist" ]; then
+            echo "✅ Build output exists"
+            ls -la dist/
+          else
+            echo "❌ Build output not found"
+            exit 1
+          fi
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-output
+          path: integrated-final/dist/
+          retention-days: 7
+
+      - name: Build Summary
+        run: |
+          echo "## ✅ 建置成功" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Node.js 版本:** 20" >> $GITHUB_STEP_SUMMARY
+          echo "**工作目錄:** integrated-final" >> $GITHUB_STEP_SUMMARY
+          echo "**建置輸出:** dist/" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "所有依賴已成功安裝並完成建置" >> $GITHUB_STEP_SUMMARY
