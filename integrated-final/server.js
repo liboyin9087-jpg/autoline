@@ -30,6 +30,51 @@ let devicesStore = [
   }
 ];
 
+// 簡單的速率限制器（記憶體實現）
+const rateLimitMap = new Map();
+const RATE_LIMIT_WINDOW = 60000; // 1 分鐘
+const RATE_LIMIT_MAX_REQUESTS = 100; // 每分鐘最多 100 個請求
+
+function simpleRateLimit(req, res, next) {
+  const clientId = req.ip || req.connection.remoteAddress;
+  const now = Date.now();
+  
+  if (!rateLimitMap.has(clientId)) {
+    rateLimitMap.set(clientId, { count: 1, resetTime: now + RATE_LIMIT_WINDOW });
+    return next();
+  }
+  
+  const clientData = rateLimitMap.get(clientId);
+  
+  if (now > clientData.resetTime) {
+    // 重置計數器
+    clientData.count = 1;
+    clientData.resetTime = now + RATE_LIMIT_WINDOW;
+    return next();
+  }
+  
+  if (clientData.count >= RATE_LIMIT_MAX_REQUESTS) {
+    return res.status(429).json({
+      success: false,
+      error: '請求過於頻繁，請稍後再試',
+      retryAfter: Math.ceil((clientData.resetTime - now) / 1000)
+    });
+  }
+  
+  clientData.count++;
+  next();
+}
+
+// 清理過期的速率限制記錄（每 5 分鐘）
+setInterval(() => {
+  const now = Date.now();
+  for (const [clientId, data] of rateLimitMap.entries()) {
+    if (now > data.resetTime + 60000) {
+      rateLimitMap.delete(clientId);
+    }
+  }
+}, 300000);
+
 // CORS 配置 - 允許前端網域存取
 const allowedOrigins = [
   'https://line-ai-assistant-970949752172-970949752172.asia-east1.run.app',
@@ -64,6 +109,9 @@ app.use(cors({
 // Body parser 中間件
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+
+// 應用速率限制到所有 API 路由
+app.use('/api/', simpleRateLimit);
 
 // 靜態文件服務
 app.use(express.static(path.join(__dirname, 'dist')));
@@ -248,8 +296,8 @@ app.post('/api/chat', async (req, res) => {
   }
 });
 
-// 手機管理介面路由
-app.get('/management', (req, res) => {
+// 手機管理介面路由（應用速率限制）
+app.get('/management', simpleRateLimit, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'management_interface.html'));
 });
 
