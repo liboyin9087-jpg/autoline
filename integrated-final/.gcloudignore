@@ -1,0 +1,76 @@
+# This file specifies files that are intentionally untracked by Git or should be excluded from deployment
+# See gcloud topic gcloudignore for more information.
+
+# Node.js dependencies
+node_modules/
+
+# Development files
+.env
+.env.local
+.env.development
+.env.test
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# Source files (we only need the built dist folder)
+src/
+components/
+services/
+utils/
+*.tsx
+*.ts
+!types.ts
+*.css
+!App.css
+
+# Build configuration files
+vite.config.ts
+tsconfig.json
+tailwind.config.js
+postcss.config.js
+
+# Documentation
+*.md
+DEPLOYMENT.md
+DEPLOYMENT_GUIDE.md
+FIXES_SUMMARY.md
+INTEGRATION_NOTES.md
+QUICK_GUIDE.md
+
+# Development artifacts
+.vite/
+vite/
+*.backup
+*.broken
+
+# Git files
+.git/
+.gitignore
+.gitattributes
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Testing
+coverage/
+.nyc_output/
+test/
+tests/
+*.test.js
+*.test.ts
+*.spec.js
+*.spec.ts
+
+# Misc
+.npmrc
+.eslintrc*
+.prettierrc*
+.editorconfig
