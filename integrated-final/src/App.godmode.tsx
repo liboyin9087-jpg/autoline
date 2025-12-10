@@ -227,7 +227,7 @@ function App() {
       
       setMessages(prev => [...prev, {
         type: 'ai',
-        text: data.reply,
+        text: data.text,
         usage: data.usage,
         mode: selectedMode
       }]);
