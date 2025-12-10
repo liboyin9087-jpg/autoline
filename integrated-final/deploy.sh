@@ -1,44 +1,8 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
-# LINE AI Assistant - Cloud Run 部署腳本
-# 此腳本用於將應用程式部署到 Google Cloud Run
-
-set -e  # 如果任何命令失敗則退出
-
-# 顏色定義
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-NC='\033[0m' # No Color
-
-# 函數：印出彩色訊息
-print_info() {
-    echo -e "${GREEN}[INFO]${NC} $1"
-}
-
-print_warning() {
-    echo -e "${YELLOW}[WARNING]${NC} $1"
-}
-
-print_error() {
-    echo -e "${RED}[ERROR]${NC} $1"
-}
-
-# 檢查必要工具
-print_info "檢查必要工具..."
-
-if ! command -v gcloud &> /dev/null; then
-    print_error "未安裝 gcloud CLI。請安裝 Google Cloud SDK。"
-    exit 1
-fi
-
-if ! command -v npm &> /dev/null; then
-    print_error "未安裝 npm。請安裝 Node.js。"
-    exit 1
-fi
-
-# 讀取設定
-print_info "讀取部署設定..."
+print_info() { echo "[INFO] $*"; }
+print_warning() { echo "[WARN] $*"; }
+print_error() { echo "[ERROR] $*"; }
 
 # 預設值
 DEFAULT_PROJECT_ID=$(gcloud config get-value project 2>/dev/null || echo "")
@@ -103,6 +67,7 @@ docker push $IMAGE_NAME:latest
 
 # 部署到 Cloud Run
 print_info "部署到 Cloud Run..."
+# 注意：不要把 PORT 加到 --set-env-vars，Cloud Run 會自動注入 PORT。保留 --port 參數告訴 Cloud Run 容器監聽哪個埠。
 gcloud run deploy $SERVICE_NAME \
   --image $IMAGE_NAME:latest \
   --platform managed \
@@ -111,7 +76,7 @@ gcloud run deploy $SERVICE_NAME \
   --memory 512Mi \
   --cpu 1 \
   --port 8080 \
-  --set-env-vars "GOOGLE_API_KEY=$GOOGLE_API_KEY,NODE_ENV=production,PORT=8080" \
+  --set-env-vars "GOOGLE_API_KEY=$GOOGLE_API_KEY,NODE_ENV=production" \
   --max-instances 10 \
   --min-instances 0 \
   --timeout 300

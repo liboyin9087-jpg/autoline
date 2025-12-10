@@ -64,7 +64,7 @@ steps:
       - '--port'
       - '8080'
       - '--set-env-vars'
-      - 'NODE_ENV=production,PORT=8080'
+      - 'NODE_ENV=production'
       - '--update-secrets'
       - 'GOOGLE_API_KEY=GOOGLE_API_KEY:latest'
       - '--max-instances'
@@ -75,12 +75,6 @@ steps:
       - '300'
     id: 'deploy-cloud-run'
     waitFor: ['push-docker-image']
-
-# Available secrets for the build process
-availableSecrets:
-  secretManager:
-    - versionName: projects/$PROJECT_ID/secrets/GOOGLE_API_KEY/versions/latest
-      env: 'GOOGLE_API_KEY'
 
 images:
   - 'gcr.io/$PROJECT_ID/line-ai-assistant:$BUILD_ID'

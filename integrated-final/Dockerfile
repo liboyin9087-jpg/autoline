@@ -9,6 +9,6 @@ COPY public ./public
 COPY server.js ./
 COPY prompts.js ./
 ENV NODE_ENV=production
-ENV PORT=8080 
+# NOTE: Do NOT hard-set PORT in production image. Cloud Run injects PORT at runtime.
 EXPOSE 8080
 CMD ["node", "server.js"]
