@@ -26,7 +26,7 @@ export const useChat = (mode: string, settings: AppSettings) => {
         })
       });
       const data = await res.json();
-      setMessages(p => [...p, { id: Date.now().toString(), role: 'model', text: data.reply, timestamp: new Date() }]);
+      setMessages(p => [...p, { id: Date.now().toString(), role: 'model', text: data.text, timestamp: new Date() }]);
     } catch (e) {
       setMessages(p => [...p, { id: Date.now().toString(), role: 'model', text: "❌ 連線失敗", timestamp: new Date() }]);
     } finally {
