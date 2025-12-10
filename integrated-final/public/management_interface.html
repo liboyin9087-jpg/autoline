@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>手機管理介面 - LINE AI Assistant</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            padding: 20px 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+
+        .header h1 {
+            color: #333;
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .card {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+
+        .card h2 {
+            color: #333;
+            font-size: 20px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #667eea;
+        }
+
+        .device-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .device-item {
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 15px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .device-item:hover {
+            border-color: #667eea;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .device-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .device-name {
+            font-weight: 600;
+            color: #333;
+            font-size: 16px;
+        }
+
+        .device-status {
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .device-status.online {
+            background: #4caf50;
+            color: white;
+        }
+
+        .device-status.offline {
+            background: #9e9e9e;
+            color: white;
+        }
+
+        .device-info {
+            color: #666;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .device-info div {
+            margin-bottom: 5px;
+        }
+
+        .device-actions {
+            margin-top: 15px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+        }
+
+        .btn-danger {
+            background: #f44336;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #da190b;
+        }
+
+        .btn-secondary {
+            background: #e0e0e0;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            background: #d0d0d0;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 36px;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            max-width: 500px;
+            width: 90%;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-header h3 {
+            color: #333;
+            font-size: 20px;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #999;
+        }
+
+        .close-btn:hover {
+            color: #333;
+        }
+
+        .status-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 5px;
+        }
+
+        .status-indicator.online {
+            background: #4caf50;
+        }
+
+        .status-indicator.offline {
+            background: #9e9e9e;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        .error {
+            background: #ffebee;
+            color: #c62828;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+        }
+
+        .success {
+            background: #e8f5e9;
+            color: #2e7d32;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📱 手機管理介面</h1>
+            <p>LINE AI Assistant - 設備管理系統</p>
+        </div>
+
+        <div id="message-container"></div>
+
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-value" id="total-devices">0</div>
+                <div class="stat-label">總設備數</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="online-devices">0</div>
+                <div class="stat-label">在線設備</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="offline-devices">0</div>
+                <div class="stat-label">離線設備</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>設備列表</h2>
+            <button class="btn btn-primary" onclick="openAddDeviceModal()">➕ 新增設備</button>
+            <div id="device-list" class="device-list">
+                <div class="loading">載入中...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 新增設備 Modal -->
+    <div id="add-device-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>新增設備</h3>
+                <button class="close-btn" onclick="closeAddDeviceModal()">&times;</button>
+            </div>
+            <form id="add-device-form">
+                <div class="form-group">
+                    <label>設備名稱</label>
+                    <input type="text" id="device-name" required placeholder="例如：我的 iPhone">
+                </div>
+                <div class="form-group">
+                    <label>設備型號</label>
+                    <input type="text" id="device-model" required placeholder="例如：iPhone 13 Pro">
+                </div>
+                <div class="form-group">
+                    <label>作業系統</label>
+                    <select id="device-os" required>
+                        <option value="">請選擇</option>
+                        <option value="iOS">iOS</option>
+                        <option value="Android">Android</option>
+                        <option value="Other">其他</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>備註</label>
+                    <input type="text" id="device-note" placeholder="選填">
+                </div>
+                <div style="display: flex; gap: 10px; margin-top: 20px;">
+                    <button type="submit" class="btn btn-primary">新增</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeAddDeviceModal()">取消</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // 設定 API URL - 根據環境自動切換
+        const DEFAULT_API_URL = window.location.origin;
+        
+        let devices = [];
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            loadDevices();
+            
+            // 表單提交處理
+            document.getElementById('add-device-form').addEventListener('submit', function(e) {
+                e.preventDefault();
+                addDevice();
+            });
+        });
+
+        // 顯示訊息
+        function showMessage(message, type = 'success') {
+            const container = document.getElementById('message-container');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = type;
+            messageDiv.textContent = message;
+            container.innerHTML = '';
+            container.appendChild(messageDiv);
+            
+            setTimeout(() => {
+                messageDiv.remove();
+            }, 3000);
+        }
+
+        // 載入設備列表
+        async function loadDevices() {
+            try {
+                // 從 localStorage 載入設備資料（示範用）
+                const savedDevices = localStorage.getItem('devices');
+                if (savedDevices) {
+                    devices = JSON.parse(savedDevices);
+                } else {
+                    // 預設示範資料
+                    devices = [
+                        {
+                            id: '1',
+                            name: '我的 iPhone',
+                            model: 'iPhone 13 Pro',
+                            os: 'iOS',
+                            status: 'online',
+                            lastSeen: new Date().toISOString(),
+                            note: '主要設備'
+                        },
+                        {
+                            id: '2',
+                            name: 'Android 手機',
+                            model: 'Samsung Galaxy S21',
+                            os: 'Android',
+                            status: 'offline',
+                            lastSeen: new Date(Date.now() - 86400000).toISOString(),
+                            note: '備用手機'
+                        }
+                    ];
+                    saveDevices();
+                }
+                
+                renderDevices();
+                updateStats();
+            } catch (error) {
+                console.error('載入設備失敗:', error);
+                showMessage('載入設備失敗：' + error.message, 'error');
+            }
+        }
+
+        // 儲存設備
+        function saveDevices() {
+            localStorage.setItem('devices', JSON.stringify(devices));
+        }
+
+        // 渲染設備列表
+        function renderDevices() {
+            const container = document.getElementById('device-list');
+            
+            if (devices.length === 0) {
+                container.innerHTML = '<div class="loading">尚無設備，請新增設備</div>';
+                return;
+            }
+            
+            container.innerHTML = devices.map(device => `
+                <div class="device-item">
+                    <div class="device-header">
+                        <div class="device-name">${device.name}</div>
+                        <div class="device-status ${device.status}">
+                            <span class="status-indicator ${device.status}"></span>
+                            ${device.status === 'online' ? '在線' : '離線'}
+                        </div>
+                    </div>
+                    <div class="device-info">
+                        <div><strong>型號：</strong>${device.model}</div>
+                        <div><strong>系統：</strong>${device.os}</div>
+                        <div><strong>最後上線：</strong>${formatDate(device.lastSeen)}</div>
+                        ${device.note ? `<div><strong>備註：</strong>${device.note}</div>` : ''}
+                    </div>
+                    <div class="device-actions">
+                        <button class="btn btn-primary" onclick="toggleDeviceStatus('${device.id}')">
+                            ${device.status === 'online' ? '設為離線' : '設為在線'}
+                        </button>
+                        <button class="btn btn-danger" onclick="deleteDevice('${device.id}')">刪除</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // 更新統計數據
+        function updateStats() {
+            const total = devices.length;
+            const online = devices.filter(d => d.status === 'online').length;
+            const offline = total - online;
+            
+            document.getElementById('total-devices').textContent = total;
+            document.getElementById('online-devices').textContent = online;
+            document.getElementById('offline-devices').textContent = offline;
+        }
+
+        // 格式化日期
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            const now = new Date();
+            const diff = now - date;
+            
+            if (diff < 60000) return '剛剛';
+            if (diff < 3600000) return Math.floor(diff / 60000) + ' 分鐘前';
+            if (diff < 86400000) return Math.floor(diff / 3600000) + ' 小時前';
+            
+            return date.toLocaleDateString('zh-TW') + ' ' + date.toLocaleTimeString('zh-TW', {
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        // 新增設備
+        async function addDevice() {
+            try {
+                const device = {
+                    id: Date.now().toString(),
+                    name: document.getElementById('device-name').value,
+                    model: document.getElementById('device-model').value,
+                    os: document.getElementById('device-os').value,
+                    status: 'online',
+                    lastSeen: new Date().toISOString(),
+                    note: document.getElementById('device-note').value
+                };
+                
+                devices.push(device);
+                saveDevices();
+                renderDevices();
+                updateStats();
+                closeAddDeviceModal();
+                showMessage('設備新增成功！');
+                
+                // 重置表單
+                document.getElementById('add-device-form').reset();
+            } catch (error) {
+                console.error('新增設備失敗:', error);
+                showMessage('新增設備失敗：' + error.message, 'error');
+            }
+        }
+
+        // 切換設備狀態
+        function toggleDeviceStatus(deviceId) {
+            const device = devices.find(d => d.id === deviceId);
+            if (device) {
+                device.status = device.status === 'online' ? 'offline' : 'online';
+                device.lastSeen = new Date().toISOString();
+                saveDevices();
+                renderDevices();
+                updateStats();
+                showMessage('設備狀態已更新');
+            }
+        }
+
+        // 刪除設備
+        function deleteDevice(deviceId) {
+            if (confirm('確定要刪除此設備嗎？')) {
+                devices = devices.filter(d => d.id !== deviceId);
+                saveDevices();
+                renderDevices();
+                updateStats();
+                showMessage('設備已刪除');
+            }
+        }
+
+        // 開啟新增設備 Modal
+        function openAddDeviceModal() {
+            document.getElementById('add-device-modal').classList.add('active');
+        }
+
+        // 關閉新增設備 Modal
+        function closeAddDeviceModal() {
+            document.getElementById('add-device-modal').classList.remove('active');
+        }
+
+        // 點擊 Modal 外部關閉
+        document.getElementById('add-device-modal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeAddDeviceModal();
+            }
+        });
+    </script>
+</body>
+</html>

@@ -17,11 +17,30 @@ const VERSION = packageJson.version;
 const app = express();
 const PORT = process.env.PORT || 8080;
 
-// CORS 配置 - 允許所有來源（開發用）
+// CORS 配置 - 允許前端網域存取
+const allowedOrigins = [
+  'https://line-ai-assistant-970949752172-970949752172.asia-east1.run.app',
+  'http://localhost:5173',  // 開發環境
+  'http://localhost:8080',
+  '*'  // 允許所有來源（開發用）
+];
+
 app.use(cors({
-  origin: '*',
+  origin: function (origin, callback) {
+    // 允許沒有 origin 的請求（如 Postman、curl）
+    if (!origin) return callback(null, true);
+    
+    // 檢查是否在允許清單中，或允許所有來源
+    if (allowedOrigins.includes('*') || allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(null, true); // 仍然允許，但記錄警告
+      console.warn('⚠️ CORS 請求來自未授權的來源:', origin);
+    }
+  },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
 }));
 
 // Body parser 中間件
@@ -46,6 +65,72 @@ app.get('/api/status', (req, res) => {
     timestamp: new Date().toISOString(),
     version: VERSION
   });
+});
+
+// 手機管理 API 端點
+// 獲取所有設備
+app.get('/api/devices', (req, res) => {
+  try {
+    // 這裡可以從資料庫讀取，目前返回示例數據
+    const devices = [
+      {
+        id: '1',
+        name: '我的 iPhone',
+        model: 'iPhone 13 Pro',
+        os: 'iOS',
+        status: 'online',
+        lastSeen: new Date().toISOString(),
+        note: '主要設備'
+      }
+    ];
+    res.json({ success: true, devices });
+  } catch (error) {
+    console.error('❌ 獲取設備列表錯誤:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// 新增設備
+app.post('/api/devices', (req, res) => {
+  try {
+    const { name, model, os, note } = req.body;
+    const newDevice = {
+      id: Date.now().toString(),
+      name,
+      model,
+      os,
+      status: 'online',
+      lastSeen: new Date().toISOString(),
+      note: note || ''
+    };
+    res.json({ success: true, device: newDevice });
+  } catch (error) {
+    console.error('❌ 新增設備錯誤:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// 更新設備狀態
+app.put('/api/devices/:id', (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+    res.json({ success: true, message: '設備狀態已更新' });
+  } catch (error) {
+    console.error('❌ 更新設備錯誤:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// 刪除設備
+app.delete('/api/devices/:id', (req, res) => {
+  try {
+    const { id } = req.params;
+    res.json({ success: true, message: '設備已刪除' });
+  } catch (error) {
+    console.error('❌ 刪除設備錯誤:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
 });
 
 // 聊天 API 端點
