@@ -5,7 +5,7 @@ print_warning() { echo "[WARN] $*"; }
 print_error() { echo "[ERROR] $*"; }
 
 # 預設值
-DEFAULT_PROJECT_ID=$(gcloud config get-value project 2&gt;/dev/null || echo "")
+DEFAULT_PROJECT_ID=$(gcloud config get-value project 2>/dev/null || echo "")
 DEFAULT_REGION="asia-east1"
 DEFAULT_SERVICE_NAME="line-ai-assistant"
 
