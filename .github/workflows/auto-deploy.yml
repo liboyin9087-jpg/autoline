@@ -84,7 +84,7 @@ jobs:
             --memory 512Mi \
             --cpu 1 \
             --port 8080 \
-            --set-env-vars "NODE_ENV=production,PORT=8080" \
+            --set-env-vars "NODE_ENV=production" \
             --update-secrets "GOOGLE_API_KEY=GOOGLE_API_KEY:latest" \
             --max-instances 10 \
             --min-instances 0 \
@@ -175,7 +175,7 @@ jobs:
             --memory 512Mi \
             --cpu 1 \
             --port 8080 \
-            --set-env-vars "NODE_ENV=production,PORT=8080" \
+            --set-env-vars "NODE_ENV=production" \
             --update-secrets "GOOGLE_API_KEY=GOOGLE_API_KEY:latest" \
             --max-instances 10 \
             --min-instances 0 \
