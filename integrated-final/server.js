@@ -9,179 +9,117 @@ dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
-// 讀取版本號
-let VERSION = '2.0.0';
-try {
-  const packageJson = JSON.parse(readFileSync(path.join(__dirname, 'package.json'), 'utf-8'));
-  VERSION = packageJson.version;
-} catch (e) {
-  console.warn('⚠️ Could not read package.json version');
-}
-
 const app = express();
 const PORT = process.env.PORT || 8080;
 
-// ===== 啟動時檢查 =====
-console.log('🚀 Server starting...');
-console.log(`📁 Working directory: ${__dirname}`);
-console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
-console.log(`🔑 API Key configured: ${!!process.env.GOOGLE_API_KEY}`);
-console.log(`📦 Version: ${VERSION}`);
-
-// 檢查 dist 資料夾
-const distPath = path.join(__dirname, 'dist');
-if (existsSync(distPath)) {
-  console.log('✅ dist folder exists');
-  try {
-    const distFiles = readdirSync(distPath);
-    console.log('📁 dist contents:', distFiles);
-    
-    const assetsPath = path.join(distPath, 'assets');
-    if (existsSync(assetsPath)) {
-      const assetFiles = readdirSync(assetsPath);
-      console.log('📁 assets contents:', assetFiles);
-    } else {
-      console.error('❌ assets folder missing!');
-    }
-    
-    const indexPath = path.join(distPath, 'index.html');
-    if (existsSync(indexPath)) {
-      console.log('✅ index.html exists');
-    } else {
-      console.error('❌ index.html missing!');
-    }
-  } catch (e) {
-    console.error('❌ Error reading dist folder:', e.message);
-  }
-} else {
-  console.error('❌ dist folder does not exist!');
-}
-
-// ===== Middleware =====
-app.use(cors({
-  origin: '*',
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
-}));
-
+// Middleware
+app.use(cors({ origin: '*' }));
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
-
-// 靜態文件服務
 app.use(express.static(path.join(__dirname, 'dist')));
 
-// ===== API Routes =====
+// 核心修復：更強健的 contents 格式轉換 (解決問題 2)
+function normalizeToGeminiContents(body) {
+    // 情況 A: 已經是標準 Gemini contents 格式
+    if (body.contents && Array.isArray(body.contents)) {
+        return body.contents;
+    }
 
-// 健康檢查
-app.get('/api/health', (req, res) => {
-  res.json({ 
-    status: 'ok', 
-    timestamp: new Date().toISOString(),
-    version: VERSION 
-  });
-});
+    // 情況 B: 來自管理介面或舊版 App (history + message)
+    let contents = [];
 
-// 狀態檢查
-app.get('/api/status', (req, res) => {
-  res.json({
-    server: 'running',
-    apiKeyConfigured: !!process.env.GOOGLE_API_KEY,
-    port: PORT,
-    environment: process.env.NODE_ENV || 'development',
-    timestamp: new Date().toISOString(),
-    version: VERSION,
-    distExists: existsSync(distPath)
-  });
-});
+    // 處理 history (即使是 undefined 或空陣列也沒關係)
+    if (body.history && Array.isArray(body.history)) {
+        body.history.forEach(msg => {
+            if (msg.text || msg.content) {
+                contents.push({
+                    role: (msg.role === 'assistant' || msg.role === 'model') ? 'model' : 'user',
+                    parts: [{ text: msg.text || msg.content || '' }]
+                });
+            }
+        });
+    }
 
-// 聊天 API
+    // 處理當前訊息 (body.message 或 body.text)
+    const currentMsgText = body.message || body.text;
+    if (currentMsgText) {
+        contents.push({
+            role: 'user',
+            parts: [{ text: currentMsgText }]
+        });
+    }
+    
+    // 如果處理完還是空的，且原始 body.messages 存在 (App 另一種格式)
+    if (contents.length === 0 && body.messages && Array.isArray(body.messages)) {
+        return body.messages.map(msg => ({
+            role: (msg.role === 'assistant' || msg.role === 'model') ? 'model' : 'user',
+            parts: [{ text: msg.text || msg.content || '' }]
+        }));
+    }
+
+    return contents.length > 0 ? contents : null;
+}
+
+// API Routes
 app.post('/api/chat', async (req, res) => {
-  try {
-    const { contents, systemInstruction, maxOutputTokens } = req.body;
-    
-    console.log('📨 Chat request received:', {
-      contentsLength: contents?.length,
-      hasSystemInstruction: !!systemInstruction,
-      maxOutputTokens
-    });
-    
-    if (!Array.isArray(contents)) {
-      return res.status(400).json({ error: 'contents must be an array' });
+    try {
+        console.log('📨 Request Body Keys:', Object.keys(req.body));
+
+        // 1. 轉換並驗證 contents
+        const contents = normalizeToGeminiContents(req.body);
+
+        if (!contents || !Array.isArray(contents) || contents.length === 0) {
+            console.error('❌ contents 轉換失敗或為空');
+            return res.status(400).json({ 
+                error: 'contents must be a non-empty array',
+                receivedBody: JSON.stringify(req.body).substring(0, 200) // Log 部分內容除錯
+            });
+        }
+
+        const apiKey = process.env.GOOGLE_API_KEY;
+        if (!apiKey) return res.status(500).json({ error: 'API Key 未設定' });
+
+        // 2. 呼叫 Gemini
+        const response = await fetch(
+            `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${apiKey}`,
+            {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents,
+                    generationConfig: {
+                        maxOutputTokens: 8192,
+                        temperature: 0.9
+                    }
+                })
+            }
+        );
+
+        if (!response.ok) {
+            const errText = await response.text();
+            console.error('Gemini API Error:', errText);
+            return res.status(response.status).json({ error: 'Gemini Error', details: errText });
+        }
+
+        const data = await response.json();
+        const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+        const usage = data.usageMetadata;
+
+        // 3. 核心修復：回傳正確格式 { text } (解決問題 1)
+        console.log('✅ 回傳成功，格式為 { text, usage }');
+        res.json({ text, usage }); 
+
+    } catch (error) {
+        console.error('Server Error:', error);
+        res.status(500).json({ error: error.message });
     }
-    
-    const apiKey = process.env.GOOGLE_API_KEY;
-    if (!apiKey) {
-      console.error('❌ GOOGLE_API_KEY not configured');
-      return res.status(500).json({ error: 'API key not configured' });
-    }
-    
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${apiKey}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents,
-          systemInstruction: systemInstruction ? { parts: [{ text: systemInstruction }] } : undefined,
-          generationConfig: {
-            maxOutputTokens: maxOutputTokens || 8192,
-            temperature: 0.9,
-            topP: 0.95,
-            topK: 40
-          }
-        })
-      }
-    );
-    
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('❌ Gemini API error:', response.status, errorText);
-      return res.status(response.status).json({ 
-        error: response.status === 429 ? 'API 配額已用完，請稍後再試' : 'API 請求失敗',
-        details: errorText
-      });
-    }
-    
-    const data = await response.json();
-    const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
-    const usage = data.usageMetadata;
-    
-    console.log('✅ Response success:', {
-      textLength: text.length,
-      usage
-    });
-    
-    // 回傳格式與前端 App.tsx 對應（使用 text 而非 reply）
-    res.json({ text, usage });
-    
-  } catch (error) {
-    console.error('❌ Server error:', error);
-    res.status(500).json({ 
-      error: 'Internal server error',
-      message: error.message 
-    });
-  }
 });
 
-// SPA 路由支援 - 所有其他請求返回 index.html
+app.get('/api/status', (req, res) => res.json({ status: 'ok', version: '2.0.1-fixed' }));
 app.get('*', (req, res) => {
-  const indexFile = path.join(__dirname, 'dist', 'index.html');
-  if (existsSync(indexFile)) {
-    res.sendFile(indexFile);
-  } else {
-    res.status(404).send('index.html not found. Build may have failed.');
-  }
+    const index = path.join(__dirname, 'dist', 'index.html');
+    if (existsSync(index)) res.sendFile(index);
+    else res.status(404).send('Build not found');
 });
 
-// 錯誤處理
-app.use((err, req, res, next) => {
-  console.error('❌ Unhandled error:', err);
-  res.status(500).json({ error: 'Something went wrong!' });
-});
-
-// ===== Start Server =====
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`✅ Server running on http://0.0.0.0:${PORT}`);
-  console.log(`📁 Serving static files from: ${distPath}`);
-});
+app.listen(PORT, '0.0.0.0', () => console.log(`Server running on port ${PORT}`));
