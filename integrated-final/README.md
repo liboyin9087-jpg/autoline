@@ -18,7 +18,11 @@
 
 ## 環境設定與部署
 
-在開始使用前，您需要先取得 Google Gemini API 金鑰。請前往 Google AI Studio 網站申請免費的 API 金鑰。取得金鑰後，在專案根目錄建立 .env 檔案，並填入您的 API 金鑰。範例配置如下：
+**重要提示：** 本專案的 Google Gemini API 金鑰已經設定在 GitHub Secrets 或雲端平台的秘密變數中，生產環境會自動讀取。
+
+### 本地開發設定
+
+如果您要在本地開發環境運行，請取得 Google Gemini API 金鑰。請前往 Google AI Studio 網站申請免費的 API 金鑰。取得金鑰後，在專案根目錄建立 .env 檔案，並填入您的 API 金鑰。範例配置如下：
 
 ```
 GOOGLE_API_KEY=your_actual_api_key_here
@@ -28,11 +32,18 @@ NODE_ENV=development
 
 完成環境變數設定後，執行 npm install 指令安裝所有必要的依賴套件。開發環境下建議開啟兩個終端視窗，一個執行 npm run dev:server 啟動後端伺服器，另一個執行 npm run dev 啟動前端開發伺服器。前端預設在 port 5173 運行，後端則在 port 8080。
 
+### 生產環境部署
+
 生產環境部署時，請先執行 npm run build 建置前端靜態檔案，建置完成後直接執行 node server.js 即可啟動生產伺服器。伺服器會同時提供 API 服務和靜態檔案託管。
+
+**環境變數會自動從以下來源讀取：**
+- GitHub Actions：從 Repository Secrets 中的 `GOOGLE_API_KEY`
+- Google Cloud Platform：從 Secret Manager 或環境變數設定
+- 其他平台：依照平台的環境變數設定方式
 
 ## GitHub 部署建議
 
-將專案推送到 GitHub 時，請確保 .env 檔案已被加入 .gitignore 清單中，避免將敏感的 API 金鑰上傳到公開儲存庫。建議在 GitHub 儲存庫的 Settings > Secrets and variables > Actions 中設定環境變數，以便在 CI/CD 流程中安全地使用。
+本專案的 API 金鑰已經設定在 GitHub 儲存庫的 Settings > Secrets and variables > Actions 中，CI/CD 流程會自動使用。請確保 .env 檔案已被加入 .gitignore 清單中，避免將敏感的 API 金鑰上傳到公開儲存庫。
 
 如需部署到 Google Cloud Platform，可以參考專案中的 cloudbuild.yaml 和 Dockerfile 配置檔案。這些檔案已經針對 Cloud Run 或 App Engine 部署進行最佳化。部署前請確保在 GCP 專案中設定好環境變數，並開啟必要的 API 服務。
 

@@ -2,12 +2,17 @@ import express from 'express';
 import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { readFileSync } from 'fs';
 import dotenv from 'dotenv';
 
 dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+// 讀取版本號從 package.json
+const packageJson = JSON.parse(readFileSync(path.join(__dirname, 'package.json'), 'utf-8'));
+const VERSION = packageJson.version;
 
 const app = express();
 const PORT = process.env.PORT || 8080;
@@ -29,6 +34,18 @@ app.use(express.static(path.join(__dirname, 'dist')));
 // 健康檢查端點
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
+// 連線狀態檢查端點
+app.get('/api/status', (req, res) => {
+  res.json({
+    server: 'running',
+    apiKeyConfigured: !!process.env.GOOGLE_API_KEY,
+    port: PORT,
+    environment: process.env.NODE_ENV || 'development',
+    timestamp: new Date().toISOString(),
+    version: VERSION
+  });
 });
 
 // 聊天 API 端點
