@@ -49,6 +49,7 @@ app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 // 靜態文件服務
 app.use(express.static(path.join(__dirname, 'dist')));
+app.use('/public', express.static(path.join(__dirname, 'public')));
 
 // 健康檢查端點
 app.get('/api/health', (req, res) => {
@@ -198,6 +199,11 @@ app.post('/api/chat', async (req, res) => {
       message: error.message 
     });
   }
+});
+
+// 手機管理介面路由
+app.get('/management', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'management_interface.html'));
 });
 
 // 所有其他路由都返回 index.html（SPA 路由支援）
