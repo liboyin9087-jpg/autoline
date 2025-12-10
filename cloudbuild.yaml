@@ -1,8 +1,8 @@
 steps:
-  # 步驟 1: 安裝依賴
+  # 步驟 1: 安裝依賴 (加入 legacy-peer-deps 解決版本衝突)
   - name: 'node:20-slim'
     entrypoint: npm
-    args: ['install']
+    args: ['install', '--legacy-peer-deps']
     dir: 'integrated-final'
     id: 'install-dependencies'
 
@@ -66,7 +66,7 @@ steps:
       - '--set-env-vars'
       - 'NODE_ENV=production,PORT=8080'
       - '--update-secrets'
-      - 'GOOGLE_API_KEY=GOOGLE_API_KEY:latest' # 這裡已經有設定密鑰給 Cloud Run 了，所以很安全
+      - 'GOOGLE_API_KEY=GOOGLE_API_KEY:latest'
       - '--max-instances'
       - '10'
       - '--min-instances'
