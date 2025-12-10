@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 助理後台管理</title>
+    <style>
+        :root { --bg: #0f172a; --card: #1e293b; --text: #f8fafc; --success: #22c55e; --error: #ef4444; }
+        body { background: var(--bg); color: var(--text); font-family: -apple-system, sans-serif; padding: 20px; margin: 0; }
+        .container { max-width: 600px; margin: 0 auto; }
+        h1 { font-size: 1.5rem; border-bottom: 1px solid #334155; padding-bottom: 10px; }
+        .card { background: var(--card); border-radius: 12px; padding: 15px; margin-bottom: 15px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+        .status-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .indicator { width: 12px; height: 12px; border-radius: 50%; background: #64748b; display: inline-block; margin-right: 8px; }
+        .indicator.on { background: var(--success); box-shadow: 0 0 8px var(--success); }
+        .indicator.off { background: var(--error); }
+        button { background: #3b82f6; color: white; border: none; padding: 10px 20px; border-radius: 8px; font-size: 1rem; width: 100%; cursor: pointer; transition: 0.2s; }
+        button:active { transform: scale(0.98); }
+        button:disabled { background: #64748b; cursor: not-allowed; }
+        #log { font-family: monospace; font-size: 0.85rem; color: #94a3b8; margin-top: 10px; white-space: pre-wrap; }
+        .timestamp { font-size: 0.8rem; color: #64748b; text-align: right; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📱 AI 系統監控台</h1>
+        
+        <div class="card">
+            <div class="status-row">
+                <span>後端連線 (Backend)</span>
+                <div><span id="api-status" class="indicator"></span> <span id="api-text">檢測中...</span></div>
+            </div>
+            <div class="status-row">
+                <span>延遲 (Latency)</span>
+                <span id="latency">--- ms</span>
+            </div>
+            <div class="timestamp" id="last-check">上次更新: ---</div>
+        </div>
+
+        <div class="card">
+            <h3>🤖 AI 回應測試</h3>
+            <p style="font-size:0.9rem; color:#ccc;">發送 "Ping" 確認 Gemini API 金鑰是否正常。</p>
+            <button id="test-btn" onclick="testAI()">發送測試請求</button>
+            <div id="log"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = window.location.origin + '/api'; // 自動抓取當前網域
+
+        async function checkHealth() {
+            const start = Date.now();
+            const statusDot = document.getElementById('api-status');
+            const statusText = document.getElementById('api-text');
+            
+            try {
+                const res = await fetch(`${API_URL}/status`); // 使用我們之前建立的 status 端點
+                const data = await res.json();
+                const latency = Date.now() - start;
+
+                if (res.ok) {
+                    statusDot.className = 'indicator on';
+                    statusText.textContent = '線上';
+                    statusText.style.color = 'var(--success)';
+                    document.getElementById('latency').textContent = `${latency} ms`;
+                } else {
+                    throw new Error('回應非 200 OK');
+                }
+            } catch (e) {
+                statusDot.className = 'indicator off';
+                statusText.textContent = '斷線';
+                statusText.style.color = 'var(--error)';
+                document.getElementById('latency').textContent = '---';
+            }
+            document.getElementById('last-check').textContent = '上次更新: ' + new Date().toLocaleTimeString();
+        }
+
+        async function testAI() {
+            const btn = document.getElementById('test-btn');
+            const log = document.getElementById('log');
+            
+            btn.disabled = true;
+            btn.textContent = "測試中...";
+            log.textContent = "正在呼叫 Gemini API...";
+
+            try {
+                const res = await fetch(`${API_URL}/chat`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        message: "Hello, 這是一個系統連線測試，請簡短回答 OK。", 
+                        history: [], 
+                        persona: "系统", 
+                        settings: {} 
+                    })
+                });
+                
+                const data = await res.json();
+                if (data.text) {
+                    log.innerHTML = `<span style="color:var(--success)">✅ 測試成功！</span>\nAI 回應: "${data.text}"`;
+                } else {
+                    log.innerHTML = `<span style="color:var(--error)">❌ 測試失敗</span>\n錯誤: ${JSON.stringify(data)}`;
+                }
+            } catch (e) {
+                log.innerHTML = `<span style="color:var(--error)">❌ 連線錯誤</span>\n${e.message}`;
+            }
+            
+            btn.disabled = false;
+            btn.textContent = "發送測試請求";
+        }
+
+        // 啟動時自動檢查，並每 30 秒更新一次
+        checkHealth();
+        setInterval(checkHealth, 30000);
+    </script>
+</body>
+</html>
