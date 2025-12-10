@@ -31,6 +31,18 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
+// 連線狀態檢查端點
+app.get('/api/status', (req, res) => {
+  res.json({
+    server: 'running',
+    apiKeyConfigured: !!process.env.GOOGLE_API_KEY,
+    port: PORT,
+    environment: process.env.NODE_ENV || 'development',
+    timestamp: new Date().toISOString(),
+    version: '2.0.0'
+  });
+});
+
 // 聊天 API 端點
 app.post('/api/chat', async (req, res) => {
   try {
