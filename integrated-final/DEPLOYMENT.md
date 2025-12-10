@@ -81,7 +81,7 @@ node server.js
 
 ## GitHub Actions 自動部署（選用）
 
-如需設定 CI/CD 自動部署，可在 GitHub 儲存庫中建立 .github/workflows/deploy.yml 檔案，配置自動建置和部署流程。記得在儲存庫設定中加入 GOOGLE_API_KEY 作為 Secret。
+如需設定 CI/CD 自動部署，可參考 `.github/workflows/deploy-cloudrun.yml` 檔案，該檔案已配置好自動建置和部署流程。記得在儲存庫設定中加入 GOOGLE_API_KEY 和 GCP_PROJECT_ID 作為 Secret。
 
 ## 常見問題處理
 

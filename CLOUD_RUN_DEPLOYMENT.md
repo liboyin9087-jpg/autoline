@@ -183,7 +183,7 @@ gcloud iam service-accounts keys create key.json \
 
 ### 3. 建立 GitHub Actions Workflow
 
-建立檔案 `.github/workflows/deploy.yml`：
+參考檔案 `.github/workflows/deploy-cloudrun.yml`，該檔案已配置好以下功能：
 
 ```yaml
 name: Deploy to Cloud Run

@@ -28,7 +28,7 @@
   - 支援輸入真實 API 金鑰進行測試
 
 ### 3. CI/CD 整合 ✅
-- ✅ `.github/workflows/deploy-cloud-run.yml` - GitHub Actions 自動部署
+- ✅ `.github/workflows/deploy-cloudrun.yml` - GitHub Actions 自動部署
   - 推送到 main 分支自動觸發
   - 支援手動觸發
   - 包含健康檢查和重試機制
@@ -234,7 +234,7 @@ autoline/
 ├── test-build.sh                # 本地測試腳本
 ├── .github/
 │   └── workflows/
-│       └── deploy-cloud-run.yml # GitHub Actions CI/CD
+│       └── deploy-cloudrun.yml # GitHub Actions CI/CD
 ├── integrated-final/            # 應用程式主目錄
 │   ├── Dockerfile               # Docker 容器配置
 │   ├── .dockerignore            # Docker 建置排除
