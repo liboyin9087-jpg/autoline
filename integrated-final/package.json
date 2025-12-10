@@ -1,8 +1,8 @@
 {
   "name": "line-ai-assistant",
-  "private": true,
   "version": "2.0.0",
-  "type": "module",
+  "description": "LINE AI Assistant with React and Express",
+  "main": "server.js",
   "scripts": {
     "dev": "vite",
     "dev:server": "node server.js",
@@ -11,29 +11,25 @@
     "start": "node server.js",
     "check:connection": "node check-connection.cjs",
     "check:images": "node check-images.cjs",
+    "check:images:fix": "node check-images.cjs --fix",
     "check:all": "npm run check:images && npm run check:connection"
   },
   "dependencies": {
-    "@google/genai": "^1.30.0",
+    "@google/generative-ai": "^0.1.3",
     "cors": "^2.8.5",
-    "dotenv": "^17.2.3",
-    "express": "^4.22.1",
-    "file-type": "^16.5.4",
-    "lucide-react": "^0.263.1",
-    "multer": "^1.4.5-lts.1",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "lucide-react": "^0.294.0",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "react-markdown": "^8.0.7",
-    "remark-gfm": "^3.0.1"
+    "react-dom": "^18.2.0"
   },
   "devDependencies": {
-    "@types/react": "^18.2.15",
-    "@types/react-dom": "^18.2.7",
-    "@vitejs/plugin-react": "^4.0.3",
-    "autoprefixer": "^10.4.14",
-    "postcss": "^8.4.27",
-    "tailwindcss": "^3.3.3",
-    "typescript": "^5.0.2",
-    "vite": "^4.4.5"
+    "@types/react": "^18.2.37",
+    "@types/react-dom": "^18.2.15",
+    "@vitejs/plugin-react": "^4.2.0",
+    "autoprefixer": "^10.4.16",
+    "postcss": "^8.4.31",
+    "tailwindcss": "^3.3.5",
+    "vite": "^5.0.0"
   }
 }
