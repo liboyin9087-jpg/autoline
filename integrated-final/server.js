@@ -17,6 +17,19 @@ const VERSION = packageJson.version;
 const app = express();
 const PORT = process.env.PORT || 8080;
 
+// 簡單的記憶體存儲（生產環境應使用資料庫）
+let devicesStore = [
+  {
+    id: '1',
+    name: '我的 iPhone',
+    model: 'iPhone 13 Pro',
+    os: 'iOS',
+    status: 'online',
+    lastSeen: new Date().toISOString(),
+    note: '主要設備'
+  }
+];
+
 // CORS 配置 - 允許前端網域存取
 const allowedOrigins = [
   'https://line-ai-assistant-970949752172-970949752172.asia-east1.run.app',
@@ -27,15 +40,20 @@ const allowedOrigins = [
 
 app.use(cors({
   origin: function (origin, callback) {
-    // 允許沒有 origin 的請求（如 Postman、curl）
+    // 允許沒有 origin 的請求（如 Postman、curl、同源請求）
     if (!origin) return callback(null, true);
     
-    // 檢查是否在允許清單中，或允許所有來源
-    if (allowedOrigins.includes('*') || allowedOrigins.indexOf(origin) !== -1) {
+    // 檢查是否在允許清單中
+    if (allowedOrigins.includes('*')) {
+      // 開發模式：允許所有來源
+      callback(null, true);
+    } else if (allowedOrigins.indexOf(origin) !== -1) {
+      // 生產模式：僅允許白名單中的來源
       callback(null, true);
     } else {
-      callback(null, true); // 仍然允許，但記錄警告
-      console.warn('⚠️ CORS 請求來自未授權的來源:', origin);
+      // 拒絕未授權的來源
+      console.warn('⚠️ CORS 請求被拒絕，來自未授權的來源:', origin);
+      callback(new Error('Not allowed by CORS'));
     }
   },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
@@ -72,19 +90,7 @@ app.get('/api/status', (req, res) => {
 // 獲取所有設備
 app.get('/api/devices', (req, res) => {
   try {
-    // 這裡可以從資料庫讀取，目前返回示例數據
-    const devices = [
-      {
-        id: '1',
-        name: '我的 iPhone',
-        model: 'iPhone 13 Pro',
-        os: 'iOS',
-        status: 'online',
-        lastSeen: new Date().toISOString(),
-        note: '主要設備'
-      }
-    ];
-    res.json({ success: true, devices });
+    res.json({ success: true, devices: devicesStore });
   } catch (error) {
     console.error('❌ 獲取設備列表錯誤:', error);
     res.status(500).json({ success: false, error: error.message });
@@ -95,15 +101,31 @@ app.get('/api/devices', (req, res) => {
 app.post('/api/devices', (req, res) => {
   try {
     const { name, model, os, note } = req.body;
+    
+    // 輸入驗證
+    if (!name || typeof name !== 'string' || name.trim() === '') {
+      return res.status(400).json({ success: false, error: '設備名稱為必填欄位' });
+    }
+    if (!model || typeof model !== 'string' || model.trim() === '') {
+      return res.status(400).json({ success: false, error: '設備型號為必填欄位' });
+    }
+    if (!os || typeof os !== 'string' || !['iOS', 'Android', 'Other'].includes(os)) {
+      return res.status(400).json({ success: false, error: '作業系統必須為 iOS、Android 或 Other' });
+    }
+    
     const newDevice = {
       id: Date.now().toString(),
-      name,
-      model,
+      name: name.trim(),
+      model: model.trim(),
       os,
       status: 'online',
       lastSeen: new Date().toISOString(),
-      note: note || ''
+      note: note ? note.trim() : ''
     };
+    
+    // 添加到存儲
+    devicesStore.push(newDevice);
+    
     res.json({ success: true, device: newDevice });
   } catch (error) {
     console.error('❌ 新增設備錯誤:', error);
@@ -116,7 +138,22 @@ app.put('/api/devices/:id', (req, res) => {
   try {
     const { id } = req.params;
     const { status } = req.body;
-    res.json({ success: true, message: '設備狀態已更新' });
+    
+    // 輸入驗證
+    if (!status || !['online', 'offline'].includes(status)) {
+      return res.status(400).json({ success: false, error: '狀態必須為 online 或 offline' });
+    }
+    
+    // 查找並更新設備
+    const device = devicesStore.find(d => d.id === id);
+    if (!device) {
+      return res.status(404).json({ success: false, error: '設備不存在' });
+    }
+    
+    device.status = status;
+    device.lastSeen = new Date().toISOString();
+    
+    res.json({ success: true, message: '設備狀態已更新', device });
   } catch (error) {
     console.error('❌ 更新設備錯誤:', error);
     res.status(500).json({ success: false, error: error.message });
@@ -127,7 +164,17 @@ app.put('/api/devices/:id', (req, res) => {
 app.delete('/api/devices/:id', (req, res) => {
   try {
     const { id } = req.params;
-    res.json({ success: true, message: '設備已刪除' });
+    
+    // 查找設備索引
+    const index = devicesStore.findIndex(d => d.id === id);
+    if (index === -1) {
+      return res.status(404).json({ success: false, error: '設備不存在' });
+    }
+    
+    // 從存儲中移除
+    const deletedDevice = devicesStore.splice(index, 1)[0];
+    
+    res.json({ success: true, message: '設備已刪除', device: deletedDevice });
   } catch (error) {
     console.error('❌ 刪除設備錯誤:', error);
     res.status(500).json({ success: false, error: error.message });
