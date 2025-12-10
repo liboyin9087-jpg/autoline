@@ -187,7 +187,7 @@ gcloud builds triggers create github \
     - '--port'
     - '8080'
     - '--set-env-vars'
-    - 'NODE_ENV=production,PORT=8080'  # 多個環境變數用逗號分隔
+    - 'NODE_ENV=production'  # 多個環境變數用逗號分隔
     - '--update-secrets'
     - 'GOOGLE_API_KEY=GOOGLE_API_KEY:latest'
 ```
@@ -243,7 +243,7 @@ args:
 
 ```yaml
 - '--set-env-vars'
-- 'NODE_ENV=production,PORT=8080,CUSTOM_VAR=value,DEBUG=false'
+- 'NODE_ENV=production,CUSTOM_VAR=value,DEBUG=false'
 ```
 
 若要設定單一環境變數：
