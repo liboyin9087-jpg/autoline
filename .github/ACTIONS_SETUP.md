@@ -62,6 +62,29 @@
 
 ## 設定步驟
 
+> **📚 完整認證設定指南：** 請參考 [GCP_AUTH_SETUP.md](./GCP_AUTH_SETUP.md) 獲取詳細的步驟說明，包括：
+> - Workload Identity Federation 設定（推薦）
+> - Service Account JSON Key 設定
+> - 使用 Compute Engine 預設 SA 的注意事項
+> - 疑難排解指南
+
+### 快速設定摘要
+
+#### 方案 A：Workload Identity Federation（推薦）
+
+需要在 GitHub 設定以下 Secrets：
+- `WORKLOAD_IDENTITY_PROVIDER`：Workload Identity Provider 資源名稱
+- `SERVICE_ACCOUNT_EMAIL`：Service Account Email
+- `GCP_PROJECT_ID`：GCP 專案 ID
+- `API_URL`：API URL（如需要）
+
+#### 方案 B：Service Account JSON Key（快速設定）
+
+需要在 GitHub 設定以下 Secrets：
+- `GCP_SA_KEY`：完整的 JSON 金鑰內容
+- `GCP_PROJECT_ID`：GCP 專案 ID
+- `API_URL`：API URL（如需要）
+
 ### 步驟 1：建立 GCP 服務帳號
 
 1. 前往 [Google Cloud Console](https://console.cloud.google.com/)
