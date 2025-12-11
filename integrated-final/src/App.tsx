@@ -201,7 +201,7 @@ const App: React.FC = () => {
 
   const currentPersona = PERSONA_DATA[settings.persona] || PERSONA_DATA[AIPersona.CONSULTANT];
   const quickActions = settings.quickActions?.length > 0 ? settings.quickActions : DEFAULT_QUICK_ACTIONS;
-  const userAvatar = (settings as any).userAvatar || '/user_avatar.png';
+  const userAvatar = settings.userAvatar || '/user_avatar.png';
 
   return (
     <div className="flex flex-col h-screen bg-fairy-bg font-sans overflow-hidden relative">
