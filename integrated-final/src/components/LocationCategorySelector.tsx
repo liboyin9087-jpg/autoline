@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { MapPin, Navigation, Globe, Sparkles, X, Check } from 'lucide-react';
 
-interface LocationCategory {
+export interface LocationCategory {
   id: string;
   name: string;
   icon: string;

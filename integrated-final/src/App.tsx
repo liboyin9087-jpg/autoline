@@ -11,7 +11,7 @@ import { QuickActionsManager } from './components/QuickActionsManager';
 import { DivineFortune } from './components/DivineFortune';
 import { FairyGroupChat, GroupChatTrigger } from './components/FairyGroupChat';
 import { EasterEggEffectRenderer, EasterEggToast, useEasterEgg } from './components/EasterEggSystem';
-import { LocationCategorySelector } from './components/LocationCategorySelector';
+import { LocationCategorySelector, LocationCategory } from './components/LocationCategorySelector';
 import { Message, MessageRole, AppMode, ToastState, AppSettings, AIPersona, MessageStatus, QuickAction } from './types';
 import { sendMessageToGemini } from './services/geminiService';
 import { extractArtifacts } from './utils/parser';
@@ -188,7 +188,7 @@ const App: React.FC = () => {
     }
   }, []);
 
-  const handleSelectCategory = useCallback((category: any, location: { lat: number; lng: number; country?: string }) => {
+  const handleSelectCategory = useCallback((category: LocationCategory, location: { lat: number; lng: number; country?: string }) => {
     const locationText = location.country ? `在${location.country}` : `在我的位置`;
     const prompt = `📍 ${locationText}（座標：${location.lat.toFixed(4)}, ${location.lng.toFixed(4)}），${category.prompt}。請提供詳細建議，包含地點名稱、特色說明和Google地圖連結。`;
     handleSend(prompt, []);
