@@ -8,3 +8,6 @@ integrated-final/.env.*
 *.tar
 *.zip
 
+# 不要追蹤建置檔案
+integrated-final/dist/
+
