@@ -11,10 +11,11 @@ import { QuickActionsManager } from './components/QuickActionsManager';
 import { DivineFortune } from './components/DivineFortune';
 import { FairyGroupChat, GroupChatTrigger } from './components/FairyGroupChat';
 import { EasterEggEffectRenderer, EasterEggToast, useEasterEgg } from './components/EasterEggSystem';
+import { LocationCategorySelector } from './components/LocationCategorySelector';
 import { Message, MessageRole, AppMode, ToastState, AppSettings, AIPersona, MessageStatus, QuickAction } from './types';
 import { sendMessageToGemini } from './services/geminiService';
 import { extractArtifacts } from './utils/parser';
-import { Edit3, Users, Wand2 } from 'lucide-react';
+import { Edit3, Users, Wand2, MapPin } from 'lucide-react';
 
 const STORAGE_KEY = 'line_ai_chat_history';
 const SETTINGS_KEY = 'line_ai_settings';
@@ -71,6 +72,8 @@ const App: React.FC = () => {
   const [showDivineFortune, setShowDivineFortune] = useState(false);
   const [showGroupChat, setShowGroupChat] = useState(false);
   const [groupChatQuestion, setGroupChatQuestion] = useState('');
+  const [showLocationSelector, setShowLocationSelector] = useState(false);
+  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const { checkForEasterEgg, activeEffect, setActiveEffect, toastMessage: easterEggToast, showToast: showEasterEggToast, setShowToast: setShowEasterEggToast, triggeredEgg } = useEasterEgg();
 
   useEffect(() => { 
@@ -163,6 +166,34 @@ const App: React.FC = () => {
   const handleGroupChatAllResponses = useCallback((responses: any[]) => { setMessages(prev => [...prev, { id: Date.now().toString(), role: MessageRole.MODEL, text: `🎭 **仙女會議**\n\n${responses.map(r => `**${r.name}**：${r.response}`).join('\n\n---\n\n')}`, timestamp: new Date(), status: MessageStatus.SENT }]); }, []);
   const handleStartGroupChat = useCallback(() => { const lastUserMessage = [...messages].reverse().find(m => m.role === MessageRole.USER); if (lastUserMessage) { setGroupChatQuestion(lastUserMessage.text); setShowGroupChat(true); } else { setToast({ message: "請先輸入問題", type: "info", isVisible: true }); } }, [messages]);
 
+  const handleLocationRequest = useCallback(() => {
+    if ('geolocation' in navigator) {
+      setToast({ message: "正在獲取位置...", type: "info", isVisible: true });
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setUserLocation({
+            lat: position.coords.latitude,
+            lng: position.coords.longitude,
+          });
+          setShowLocationSelector(true);
+          setToast({ message: "位置獲取成功", type: "success", isVisible: true });
+        },
+        (error) => {
+          console.error('Geolocation error:', error);
+          setToast({ message: "無法獲取位置，請確認已開啟定位權限", type: "error", isVisible: true });
+        }
+      );
+    } else {
+      setToast({ message: "您的裝置不支援定位功能", type: "error", isVisible: true });
+    }
+  }, []);
+
+  const handleSelectCategory = useCallback((category: any, location: { lat: number; lng: number; country?: string }) => {
+    const locationText = location.country ? `在${location.country}` : `在我的位置`;
+    const prompt = `📍 ${locationText}（座標：${location.lat.toFixed(4)}, ${location.lng.toFixed(4)}），${category.prompt}。請提供詳細建議，包含地點名稱、特色說明和Google地圖連結。`;
+    handleSend(prompt, []);
+  }, []);
+
   const currentPersona = PERSONA_DATA[settings.persona] || PERSONA_DATA[AIPersona.CONSULTANT];
   const quickActions = settings.quickActions?.length > 0 ? settings.quickActions : DEFAULT_QUICK_ACTIONS;
 
@@ -178,6 +209,7 @@ const App: React.FC = () => {
       {isQuickActionsManagerOpen && <QuickActionsManager quickActions={quickActions} onSave={handleSaveQuickActions} onClose={() => setIsQuickActionsManagerOpen(false)} />}
       <DivineFortune isOpen={showDivineFortune} onClose={() => setShowDivineFortune(false)} onResult={handleFortuneResult} botName={currentPersona.name} botAvatar={currentPersona.img} />
       <FairyGroupChat isOpen={showGroupChat} onClose={() => setShowGroupChat(false)} userQuestion={groupChatQuestion} onSelectResponse={handleGroupChatResponse} onSendAllResponses={handleGroupChatAllResponses} />
+      <LocationCategorySelector isOpen={showLocationSelector} onClose={() => setShowLocationSelector(false)} onSelectCategory={handleSelectCategory} location={userLocation} />
       
       <main className="flex-1 overflow-y-auto w-full max-w-4xl mx-auto p-4 pb-20 scrollbar-hide">
         {messages.length <= 1 && !isLoading && (
@@ -189,6 +221,12 @@ const App: React.FC = () => {
                 <button onClick={() => setIsQuickActionsManagerOpen(true)} className="text-xs text-fairy-primary hover:text-fairy-dark flex items-center gap-1 font-medium"><Edit3 size={12} /> 自訂</button>
               </div>
               <div className="grid grid-cols-2 gap-4">{quickActions.map(action => (<QuickActionBtn key={action.id} icon={action.icon} label={action.label} subLabel={action.subLabel} colorClass={action.colorClass} onClick={() => handleSend(action.prompt, [])} />))}</div>
+              <div className="mt-4 mb-6">
+                <button onClick={handleLocationRequest} className="w-full p-4 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white rounded-2xl shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-3 font-bold">
+                  <MapPin size={24} />
+                  <span>📍 探索附近推薦</span>
+                </button>
+              </div>
               <div className="mt-6 p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-2xl border border-purple-100"><div className="flex items-center gap-2 mb-2"><Wand2 size={16} className="text-purple-500" /><span className="text-sm font-bold text-purple-700">隱藏彩蛋</span></div><p className="text-xs text-gray-600">試試說「下班」「發財」「單身」「debug」... 會有驚喜喔！✨</p></div>
             </div>
           </div>
