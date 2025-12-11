@@ -192,7 +192,7 @@ export const InputArea: React.FC<{
         
         <button 
           onClick={() => setShowFilterMenu(!showFilterMenu)} 
-          className={`${showFilterMenu || activeFilters.length > 0 ? activeIconClass : iconClass} hidden sm:block relative`}
+          className={`${showFilterMenu || activeFilters.length > 0 ? activeIconClass : iconClass} relative`}
           title="篩選器"
         >
           <Filter size={24}/>
