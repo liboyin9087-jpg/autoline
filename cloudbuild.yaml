@@ -1,0 +1,54 @@
+steps:
+  # 步驟 1: 安裝依賴 - **修正為 npm ci --legacy-peer-deps 確保相容性**
+  - name: 'node:20-slim'
+    entrypoint: npm
+    args: ['ci', '--legacy-peer-deps'] 
+    id: 'install-deps'
+  # 步驟 2: 建置前端
+  - name: 'node:20-slim'
+    entrypoint: npm
+    args: ['run', 'build']
+    id: 'build-front'
+    waitFor: ['install-deps']
+  # 步驟 3: 建置 Docker 映像檔
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', 'gcr.io/$PROJECT_ID/line-ai-assistant:$BUILD_ID', '-t', 'gcr.io/$PROJECT_ID/line-ai-assistant:latest', '.']
+    id: 'build-image'
+    waitFor: ['build-front']
+  # 步驟 4: 推送映像檔
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/$PROJECT_ID/line-ai-assistant:$BUILD_ID']
+    id: 'push-image'
+    waitFor: ['build-image']
+  # 步驟 5: 推送 Latest 標籤
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/$PROJECT_ID/line-ai-assistant:latest']
+    id: 'push-latest'
+    waitFor: ['build-image']
+  # 步驟 6: 部署到 Cloud Run (這次服務會重新建立，並使用正確的 Secret)
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      - 'run'
+      - 'deploy'
+      - 'line-ai-assistant'
+      - '--image'
+      - 'gcr.io/$PROJECT_ID/line-ai-assistant:$BUILD_ID'
+      - '--region'
+      - 'asia-east1'
+      - '--platform'
+      - 'managed'
+      - '--allow-unauthenticated'
+      - '--port'
+      - '8080'
+      - '--set-env-vars'
+      - 'NODE_ENV=production'
+      - '--update-secrets'
+      - 'GOOGLE_API_KEY=GOOGLE_API_KEY:latest'
+    id: 'deploy'
+    waitFor: ['push-image']
+images:
+  - 'gcr.io/$PROJECT_ID/line-ai-assistant:latest'
+timeout: 1200s
+options:
+  logging: CLOUD_LOGGING_ONLY

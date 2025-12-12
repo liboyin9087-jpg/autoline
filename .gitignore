@@ -1,0 +1,8 @@
+.cache/
+.codeoss/
+node_modules/
+.npm/
+.config/
+.docker/
+.gemini/
+.vscode/
