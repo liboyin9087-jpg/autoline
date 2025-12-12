@@ -48,6 +48,17 @@ app.use(cors({
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
+// ★★★ 新增：全形斜線自動修正功能 (放在靜態檔案之前) ★★★
+// 這會攔截帶有「／」的網址並自動修正為「/」
+app.use((req, res, next) => {
+  const normalized = req.url.replace(/\uFF0F/g, '/');
+  if (normalized !== req.url) {
+    console.log(`🔀 Redirecting full-width slash: ${req.url} -> ${normalized}`);
+    return res.redirect(301, normalized);
+  }
+  next();
+});
+
 // 靜態文件服務
 app.use(express.static(distPath));
 
