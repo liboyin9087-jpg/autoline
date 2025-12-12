@@ -1,6 +1,7 @@
 {
   "name": "line-ai-assistant",
   "version": "2.0.0",
+  "type": "module",
   "description": "LINE AI Assistant with React and Express",
   "main": "server.js",
   "scripts": {
