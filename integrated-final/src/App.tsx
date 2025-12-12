@@ -46,7 +46,7 @@ const DEFAULT_QUICK_ACTIONS: QuickAction[] = [
 const QuickActionBtn = ({ icon, label, subLabel, colorClass, onClick }: { icon: React.ReactNode, label: string, subLabel: string, colorClass: string, onClick: () => void }) => (
   <button onClick={onClick} className="relative overflow-hidden group flex flex-col items-center justify-center p-4 rounded-2xl border border-white/40 bg-white/60 backdrop-blur-md shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 w-full aspect-[1/1]">
     <div className={`absolute -top-10 -right-10 w-24 h-24 rounded-full opacity-20 blur-2xl transition-opacity group-hover:opacity-40 ${colorClass}`}></div>
-    <div className={`w-12 h-12 rounded-full flex items-center justify-center text-2xl shadow-inner mb-3 bg-white/80 ${colorClass.replace('bg-', 'text-')}`}>{icon}</div>
+    <div className={`w-12 h-12 rounded-full flex items-center justify-center text-2xl shadow-inner mb-3 bg-white/80`} style={{ color: (colorClass || '').replace('bg-', '') }}>{icon}</div>
     <span className="text-sm font-bold text-gray-800 tracking-wide">{label}</span>
     <span className="text-[10px] text-gray-500 mt-1">{subLabel}</span>
   </button>
@@ -57,8 +57,8 @@ const App: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [settings, setSettings] = useState<AppSettings>({ 
     maxOutputTokens: 4096, persona: AIPersona.CONSULTANT, customMemory: "", 
-    enableMic: true, enableEmoji: true, quickActions: [], dailyTokenLimit: 50000, tokenUsageStats: []
-  });
+    enableMic: true, enableEmoji: true, quickActions: [], dailyTokenLimit: 50000, tokenUsageStats: [], userAvatar: undefined
+  } as AppSettings);
   const [isLoading, setIsLoading] = useState(false);
   const [mode, setMode] = useState<AppMode>(AppMode.LIFESTYLE);
   const [toast, setToast] = useState<ToastState>({ message: '', type: 'info', isVisible: false });
@@ -99,7 +99,7 @@ const App: React.FC = () => {
 
   const handleReset = useCallback(() => {
     const uiConfig = PERSONA_UI_CONFIG[settings.persona] || PERSONA_UI_CONFIG[AIPersona.CONSULTANT];
-    setMessages([{ id: 'welcome', role: MessageRole.MODEL, text: uiConfig.welcome, timestamp: new Date(), status: MessageStatus.SENT }]);
+    setMessages([{ id: 'welcome', role: MessageRole.MODEL, text: uiConfig.welcome, timestamp: new Date(), status: MessageStatus.SENT } as Message]);
     setCurrentSessionTokens(0);
     setSelectedFiles([]);
     setToast({ message: "對話已重置", type: "success", isVisible: true });
@@ -108,7 +108,7 @@ const App: React.FC = () => {
   useEffect(() => {
     const uiConfig = PERSONA_UI_CONFIG[settings.persona] || PERSONA_UI_CONFIG[AIPersona.CONSULTANT];
     setMessages(prev => {
-      if (prev.length === 0) return [{ id: 'welcome', role: MessageRole.MODEL, text: uiConfig.welcome, timestamp: new Date(), status: MessageStatus.SENT }];
+      if (prev.length === 0) return [{ id: 'welcome', role: MessageRole.MODEL, text: uiConfig.welcome, timestamp: new Date(), status: MessageStatus.SENT } as Message];
       if (prev.length === 1 && prev[0].id === 'welcome') return [{ ...prev[0], text: uiConfig.welcome }];
       return prev;
     });
@@ -124,23 +124,27 @@ const App: React.FC = () => {
   const handleSend = async (text: string, files: File[]) => {
     if (!text.trim() && files.length === 0) return;
     if (text === '__DIVINE_FORTUNE__') { setShowDivineFortune(true); return; }
-    const easterEgg = checkForEasterEgg(text);
+    const easterEgg = checkForEasterEgg ? checkForEasterEgg(text) : undefined;
     if (easterEgg?.effect === 'fairy_summon') { setGroupChatQuestion(text); setShowGroupChat(true); return; }
 
     const messageId = Date.now().toString();
     const attachments = await Promise.all(files.map(async (file) => ({ id: Math.random().toString(), mimeType: file.type, data: await fileToBase64(file), filename: file.name, size: file.size })));
     const newUserMsg: Message = { id: messageId, role: MessageRole.USER, text, timestamp: new Date(), status: MessageStatus.PENDING, attachments: attachments.length > 0 ? attachments : undefined };
     
+    // append user message
     setMessages(prev => [...prev, newUserMsg]);
     setSelectedFiles([]);
     setIsLoading(true);
 
     try {
+      // mark as sent
       setMessages(prev => prev.map(m => m.id === messageId ? { ...m, status: MessageStatus.SENT } : m));
+      // send to backend
       const res = await sendMessageToGemini([...messages, newUserMsg], mode, undefined, settings);
       const responseText = easterEgg?.customResponse ? `${easterEgg.customResponse}\n\n---\n\n${res.text}` : res.text;
-      setMessages(prev => [...prev, { id: (Date.now() + 1).toString(), role: MessageRole.MODEL, text: responseText, timestamp: new Date(), artifacts: extractArtifacts(responseText), usage: res.usage, status: MessageStatus.SENT }]);
-      if (res.usage) setCurrentSessionTokens(prev => prev + res.usage.totalTokens);
+      const modelMsg: Message = { id: (Date.now() + 1).toString(), role: MessageRole.MODEL, text: responseText, timestamp: new Date(), artifacts: extractArtifacts(responseText), usage: res.usage, status: MessageStatus.SENT };
+      setMessages(prev => [...prev, modelMsg]);
+      if (res.usage && typeof res.usage.totalTokens === 'number') setCurrentSessionTokens(prev => prev + res.usage.totalTokens);
     } catch (e) { 
       console.error(e); 
       setMessages(prev => prev.map(m => m.id === messageId ? { ...m, status: MessageStatus.FAILED } : m));
@@ -151,8 +155,9 @@ const App: React.FC = () => {
   const handleRetry = useCallback((messageId: string) => {
     const failedMessage = messages.find(m => m.id === messageId);
     if (!failedMessage) return;
+    // remove failed message and resend the text
     setMessages(prev => prev.filter(m => m.id !== messageId));
-    handleSend(failedMessage.text, []);
+    handleSend(failedMessage.text || '', []);
   }, [messages]);
 
   const handleMessageSelect = useCallback((messageId: string) => {
@@ -160,11 +165,42 @@ const App: React.FC = () => {
     if (element) { element.scrollIntoView({ behavior: 'smooth', block: 'center' }); element.classList.add('bg-yellow-100'); setTimeout(() => element.classList.remove('bg-yellow-100'), 2000); }
   }, []);
 
-  const handleSaveQuickActions = useCallback((actions: QuickAction[]) => { setSettings(prev => ({ ...prev, quickActions: actions })); setToast({ message: "快速操作已更新", type: "success", isVisible: true }); }, []);
-  const handleFortuneResult = useCallback((fortune: any) => { handleSend(`🎋 第 ${fortune.number} 籤【${fortune.level}】- ${fortune.title}\n籤詩：「${fortune.poem}」\n請解讀`, []); }, []);
-  const handleGroupChatResponse = useCallback((persona: AIPersona, response: string) => { setMessages(prev => [...prev, { id: Date.now().toString(), role: MessageRole.MODEL, text: `**${PERSONA_DATA[persona]?.name}**：\n\n${response}`, timestamp: new Date(), status: MessageStatus.SENT }]); }, []);
-  const handleGroupChatAllResponses = useCallback((responses: any[]) => { setMessages(prev => [...prev, { id: Date.now().toString(), role: MessageRole.MODEL, text: `🎭 **仙女會議**\n\n${responses.map(r => `**${r.name}**：${r.response}`).join('\n\n---\n\n')}`, timestamp: new Date(), status: MessageStatus.SENT }]); }, []);
-  const handleStartGroupChat = useCallback(() => { const lastUserMessage = [...messages].reverse().find(m => m.role === MessageRole.USER); if (lastUserMessage) { setGroupChatQuestion(lastUserMessage.text); setShowGroupChat(true); } else { setToast({ message: "請先輸入問題", type: "info", isVisible: true }); } }, [messages]);
+  const handleSaveQuickActions = useCallback((actions: QuickAction[]) => { 
+    setSettings(prev => ({ ...prev, quickActions: actions })); 
+    setToast({ message: "快速操作已更新", type: "success", isVisible: true });
+  }, []);
+
+  const handleFortuneResult = useCallback((fortune: any) => {
+    if (!fortune) return;
+    const fortuneText = `🎋 第 ${fortune.number} 籤【${fortune.level}】- ${fortune.title}\n籤詩：「${fortune.poem}」\n請解讀`;
+    handleSend(fortuneText, []);
+  }, [handleSend]);
+
+  const handleGroupChatResponse = useCallback((persona: AIPersona, response: string) => {
+    const personaName = PERSONA_DATA[persona]?.name || '仙女';
+    const modelMsg: Message = { id: Date.now().toString(), role: MessageRole.MODEL, text: `**${personaName}**: ${response}`, timestamp: new Date(), status: MessageStatus.SENT } as Message;
+    setMessages(prev => [...prev, modelMsg]);
+    setShowGroupChat(false);
+  }, []);
+
+  const handleGroupChatAllResponses = useCallback((responses: { persona: AIPersona, text: string }[]) => {
+    if (!responses || responses.length === 0) return;
+    const combined = responses.map(r => `**${PERSONA_DATA[r.persona]?.name || '仙女'}**: ${r.text}`).join('\n\n');
+    const modelMsg: Message = { id: Date.now().toString(), role: MessageRole.MODEL, text: `🎭 **仙女會議**\n\n${combined}`, timestamp: new Date(), status: MessageStatus.SENT } as Message;
+    setMessages(prev => [...prev, modelMsg]);
+    setShowGroupChat(false);
+  }, []);
+
+  const handleStartGroupChat = useCallback(() => { 
+    const lastUserMessage = [...messages].reverse().find(m => m.role === MessageRole.USER);
+    if (lastUserMessage) { 
+      setGroupChatQuestion(lastUserMessage.text || '');
+      setShowGroupChat(true); 
+    } else {
+      setGroupChatQuestion('');
+      setShowGroupChat(true);
+    }
+  }, [messages]);
 
   const handleLocationRequest = useCallback(() => {
     if ('geolocation' in navigator) {
@@ -196,6 +232,7 @@ const App: React.FC = () => {
 
   const currentPersona = PERSONA_DATA[settings.persona] || PERSONA_DATA[AIPersona.CONSULTANT];
   const quickActions = settings.quickActions?.length > 0 ? settings.quickActions : DEFAULT_QUICK_ACTIONS;
+  const userAvatar = settings.userAvatar || '/user_avatar.png';
 
   return (
     <div className="flex flex-col h-screen bg-fairy-bg font-sans overflow-hidden relative">
@@ -209,7 +246,6 @@ const App: React.FC = () => {
       {isQuickActionsManagerOpen && <QuickActionsManager quickActions={quickActions} onSave={handleSaveQuickActions} onClose={() => setIsQuickActionsManagerOpen(false)} />}
       <DivineFortune isOpen={showDivineFortune} onClose={() => setShowDivineFortune(false)} onResult={handleFortuneResult} botName={currentPersona.name} botAvatar={currentPersona.img} />
       <FairyGroupChat isOpen={showGroupChat} onClose={() => setShowGroupChat(false)} userQuestion={groupChatQuestion} onSelectResponse={handleGroupChatResponse} onSendAllResponses={handleGroupChatAllResponses} />
-      <LocationCategorySelector isOpen={showLocationSelector} onClose={() => setShowLocationSelector(false)} onSelectCategory={handleSelectCategory} location={userLocation} />
       
       <main className="flex-1 overflow-y-auto w-full max-w-4xl mx-auto p-4 pb-20 scrollbar-hide">
         {messages.length <= 1 && !isLoading && (
@@ -220,23 +256,53 @@ const App: React.FC = () => {
                 <div className="flex items-center gap-2"><div className="h-[1px] w-8 bg-fairy-primary"></div><p className="text-fairy-primary font-bold text-xs tracking-widest">御賜法寶</p><div className="h-[1px] w-8 bg-fairy-primary"></div></div>
                 <button onClick={() => setIsQuickActionsManagerOpen(true)} className="text-xs text-fairy-primary hover:text-fairy-dark flex items-center gap-1 font-medium"><Edit3 size={12} /> 自訂</button>
               </div>
-              <div className="grid grid-cols-2 gap-4">{quickActions.map(action => (<QuickActionBtn key={action.id} icon={action.icon} label={action.label} subLabel={action.subLabel} colorClass={action.colorClass} onClick={() => handleSend(action.prompt, [])} />))}</div>
-              <div className="mt-4 mb-6">
-                <button onClick={handleLocationRequest} className="w-full p-4 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white rounded-2xl shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-3 font-bold">
-                  <MapPin size={24} />
-                  <span>📍 探索附近推薦</span>
-                </button>
+              <div className="grid grid-cols-2 gap-4">
+                {quickActions.map(action => (
+                  <QuickActionBtn key={action.id} icon={action.icon} label={action.label} subLabel={action.subLabel} colorClass={action.colorClass} onClick={() => handleSend(action.prompt, [])} />
+                ))}
               </div>
-              <div className="mt-6 p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-2xl border border-purple-100"><div className="flex items-center gap-2 mb-2"><Wand2 size={16} className="text-purple-500" /><span className="text-sm font-bold text-purple-700">隱藏彩蛋</span></div><p className="text-xs text-gray-600">試試說「下班」「發財」「單身」「debug」... 會有驚喜喔！✨</p></div>
+              <div className="mt-6 p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-2xl border border-purple-100">
+                <div className="flex items-center gap-2 mb-2"><Wand2 size={16} className="text-pink-500" /><div className="text-sm font-medium">仙女小提示</div></div>
+                <div className="text-xs text-gray-600">使用快速操作能快速查詢常用項目。點選「自訂」可以管理你的快速操作。</div>
+              </div>
             </div>
           </div>
         )}
-        {messages.map(msg => (<div key={msg.id} ref={el => { messageRefs.current[msg.id] = el; }} className="transition-colors duration-300"><MessageBubble message={msg} userAvatar={settings.userAvatar} botAvatar={currentPersona.img} botName={currentPersona.name} onPreview={() => {}} onRetry={handleRetry} /></div>))}
-        {isLoading && (<div className="flex justify-center my-4"><div className="bg-white/80 backdrop-blur px-5 py-2 rounded-full text-fairy-primary text-sm flex items-center gap-2 shadow-soft border border-fairy-primary/10 animate-pulse"><span className="animate-bounce text-lg">✨</span><span>{PERSONA_UI_CONFIG[settings.persona]?.loading}</span></div></div>)}
+        {messages.map(msg => (
+          <div key={msg.id} ref={el => { messageRefs.current[msg.id] = el; }} className="transition-colors duration-300 my-2">
+            <MessageBubble
+              message={msg}
+              userAvatar={userAvatar}
+              onRetry={() => msg.status === MessageStatus.FAILED ? handleRetry(msg.id) : undefined}
+              onSelect={() => handleMessageSelect(msg.id)}
+            />
+          </div>
+        ))}
+        {isLoading && (
+          <div className="flex justify-center my-4">
+            <div className="bg-white/80 backdrop-blur px-5 py-2 rounded-full text-fairy-primary text-sm flex items-center gap-3 shadow-soft border border-white/30">
+              <div className="w-4 h-4 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 animate-pulse" />
+              正在生成回覆...
+            </div>
+          </div>
+        )}
         <div ref={messagesEndRef} />
       </main>
-      {messages.length > 1 && (<div className="absolute bottom-24 right-4 z-30"><button onClick={handleStartGroupChat} className="p-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-full shadow-lg hover:shadow-xl transition-all hover:scale-110" title="召喚全體仙女"><Users size={24} /></button></div>)}
-      <InputArea onSend={handleSend} onShowToast={(m) => setToast({ message: m, type: 'info', isVisible: true })} isLoading={isLoading} selectedFiles={selectedFiles} onFilesChange={setSelectedFiles} showMic={settings.enableMic} showEmoji={settings.enableEmoji} />
+      {messages.length > 1 && (
+        <div className="absolute bottom-24 right-4 z-30">
+          <button onClick={handleStartGroupChat} className="p-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-full shadow-lg flex items-center gap-2">
+            <Users size={16} /> 召喚仙女會議
+          </button>
+        </div>
+      )}
+      <InputArea
+        onSend={handleSend}
+        onShowToast={(m) => setToast({ message: m, type: 'info', isVisible: true })}
+        isLoading={isLoading}
+        selectedFiles={selectedFiles}
+        onFilesChange={setSelectedFiles}
+        settings={settings}
+      />
     </div>
   );
 };

@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { Send, Plus, SlidersHorizontal, Mic, Smile, X, Filter } from 'lucide-react';
+import { AppSettings } from '../types';
 
 // Emoji 快捷選擇器
 const EMOJI_PRESETS = ['😊', '👍', '❤️', '😂', '🎉', '🙏', '💪', '✨', '🔥', '😎', '🤔', '😭', '😍', '🎊', '💯'];
@@ -18,9 +19,11 @@ export const InputArea: React.FC<{
   isLoading: boolean; 
   selectedFiles: File[]; 
   onFilesChange: (f: File[]) => void; 
-  showMic: boolean; 
-  showEmoji: boolean; 
-}> = ({ onSend, onShowToast, isLoading, selectedFiles, onFilesChange, showMic, showEmoji }) => {
+  settings: AppSettings;
+}> = ({ onSend, onShowToast, isLoading, selectedFiles, onFilesChange, settings }) => {
+  const showMic = settings.enableMic ?? true;
+  const showEmoji = settings.enableEmoji ?? true;
+  
   const [text, setText] = useState('');
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [showFilterMenu, setShowFilterMenu] = useState(false);
