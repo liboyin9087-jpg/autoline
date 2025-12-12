@@ -37,7 +37,6 @@ COPY --from=builder /app/dist ./dist
 
 # 複製伺服器檔案
 COPY server.js ./
-COPY prompts.js ./
 
 # 設定環境變數
 ENV NODE_ENV=production
