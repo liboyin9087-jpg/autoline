@@ -10,9 +10,10 @@ export const MessageBubble: React.FC<{
   userAvatar?: string; 
   botAvatar?: string; 
   botName?: string; 
-  onPreview: (a: FileArtifact) => void;
-  onRetry?: (messageId: string) => void;
-}> = ({ message, userAvatar, botAvatar, botName, onPreview, onRetry }) => {
+  onPreview?: (a: FileArtifact) => void;
+  onRetry?: () => void;
+  onSelect?: () => void;
+}> = ({ message, userAvatar, botAvatar, botName, onPreview, onRetry, onSelect }) => {
   const isModel = message.role === MessageRole.MODEL;
   
   // 狀態圖示渲染
@@ -87,7 +88,7 @@ export const MessageBubble: React.FC<{
             {/* 失敗時的重試按鈕 */}
             {!isModel && message.status === MessageStatus.FAILED && onRetry && (
               <button
-                onClick={() => onRetry(message.id)}
+                onClick={() => onRetry()}
                 className="mt-2 flex items-center gap-1 text-xs text-white/90 hover:text-white bg-white/20 hover:bg-white/30 px-3 py-1 rounded-full transition-colors"
               >
                 <RefreshCw size={12} />
@@ -96,7 +97,7 @@ export const MessageBubble: React.FC<{
             )}
         </div>
 
-        {message.artifacts && <div className="mt-2 space-y-2">{message.artifacts.map(a => <FileArtifactCard key={a.id} artifact={a} onPreview={onPreview} />)}</div>}
+        {message.artifacts && <div className="mt-2 space-y-2">{message.artifacts.map(a => <FileArtifactCard key={a.id} artifact={a} onPreview={onPreview || (() => {})} />)}</div>}
         
         <div className={`flex items-center gap-2 mt-1 ${isModel ? 'ml-1' : 'justify-end mr-1'}`}>
           <span className="text-[10px] text-gray-400">
