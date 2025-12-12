@@ -1,31 +1,42 @@
 steps:
+  # 1. 安裝依賴
   - name: 'node:20-slim'
     entrypoint: npm
     args: ['ci', '--legacy-peer-deps']
     id: 'install-deps'
+
+  # 2. 建置前端
   - name: 'node:20-slim'
     entrypoint: npm
     args: ['run', 'build']
     id: 'build-front'
     waitFor: ['install-deps']
+
+  # 3. 建置 Docker 映像檔
   - name: 'gcr.io/cloud-builders/docker'
     args: ['build', '-t', 'gcr.io/$PROJECT_ID/line-ai-assistant:$BUILD_ID', '-t', 'gcr.io/$PROJECT_ID/line-ai-assistant:latest', '.']
     id: 'build-image'
     waitFor: ['build-front']
+
+  # 4. 推送映像檔 (本次版號)
   - name: 'gcr.io/cloud-builders/docker'
     args: ['push', 'gcr.io/$PROJECT_ID/line-ai-assistant:$BUILD_ID']
     id: 'push-image'
     waitFor: ['build-image']
+
+  # 5. 推送映像檔 (Latest)
   - name: 'gcr.io/cloud-builders/docker'
     args: ['push', 'gcr.io/$PROJECT_ID/line-ai-assistant:latest']
     id: 'push-latest'
     waitFor: ['build-image']
+
+  # 6. 部署到 Cloud Run (已指定你的長檔名服務)
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     entrypoint: gcloud
     args:
       - 'run'
       - 'deploy'
-      - 'line-ai-assistant'
+      - 'line-ai-assistant-970949752172' # <--- 這裡修改了！指定部署到你要保留的那個服務
       - '--image'
       - 'gcr.io/$PROJECT_ID/line-ai-assistant:$BUILD_ID'
       - '--region'
@@ -41,6 +52,7 @@ steps:
       - 'GOOGLE_API_KEY=GOOGLE_API_KEY:latest'
     id: 'deploy'
     waitFor: ['push-image']
+
 images:
   - 'gcr.io/$PROJECT_ID/line-ai-assistant:latest'
 timeout: 1200s
