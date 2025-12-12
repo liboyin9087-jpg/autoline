@@ -386,7 +386,7 @@ const App: React.FC = () => {
         <div ref={messagesEndRef} />
       </main>
       {messages.length > 1 && (<div className="absolute bottom-24 right-4 z-30"><button onClick={handleStartGroupChat} className="p-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-full shadow-lg hover:shadow-xl transition-all hover:scale-110" title="召喚全體仙女"><Users size={24} /></button></div>)}
-      <InputArea onSend={handleSend} onShowToast={(m) => setToast({ message: m, type: 'info', isVisible: true })} isLoading={isLoading} selectedFiles={selectedFiles} onFilesChange={setSelectedFiles} showMic={settings.enableMic} showEmoji={settings.enableEmoji} />
+      <InputArea onSend={handleSend} onShowToast={(m) => setToast({ message: m, type: 'info', isVisible: true })} isLoading={isLoading} selectedFiles={selectedFiles} onFilesChange={setSelectedFiles} showMic={settings?.enableMic ?? true} showEmoji={settings?.enableEmoji ?? true} />
     </div>
   );
 };
