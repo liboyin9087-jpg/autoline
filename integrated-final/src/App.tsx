@@ -43,7 +43,7 @@ const DEFAULT_QUICK_ACTIONS: QuickAction[] = [
 ];
 
 const QuickActionBtn = ({ icon, label, subLabel, colorClass, onClick }: { icon: React.ReactNode, label: string, subLabel: string, colorClass: string, onClick: () => void }) => (
-  <button onClick={onClick} className="relative overflow-hidden group flex flex-col items-center justify-center p-4 rounded-2xl border border-white/40 bg-white/60 backdrop-blur-md shadow-sm hover:shadow-md transition-all">
+  <button onClick={onClick} className="relative overflow-hidden group flex flex-col items-center justify-center p-4 rounded-2xl border border-white/40 bg-white/60 backdrop-blur-md shadow-sm hover:[...]
     <div className={`absolute -top-10 -right-10 w-24 h-24 rounded-full opacity-20 blur-2xl transition-opacity group-hover:opacity-40 ${colorClass}`}></div>
     <div className={`w-12 h-12 rounded-full flex items-center justify-center text-2xl shadow-inner mb-3 bg-white/80`} style={{ color: (colorClass || '').replace('bg-', '') }}>{icon}</div>
     <span className="text-sm font-bold text-gray-800 tracking-wide">{label}</span>
@@ -125,8 +125,8 @@ const App: React.FC = () => {
     if (easterEgg?.effect === 'fairy_summon') { setGroupChatQuestion(text); setShowGroupChat(true); return; }
 
     const messageId = Date.now().toString();
-    const attachments = await Promise.all(files.map(async (file) => ({ id: Math.random().toString(), mimeType: file.type, data: await fileToBase64(file), filename: file.name, size: file.size })));
-    const newUserMsg: Message = { id: messageId, role: MessageRole.USER, text, timestamp: new Date(), status: MessageStatus.PENDING, attachments: attachments.length > 0 ? attachments : undefined } as Message;
+    const attachments = await Promise.all(files.map(async (file) => ({ id: Math.random().toString(), mimeType: file.type, data: await fileToBase64(file), filename: file.name, size: file.size })))[...]
+    const newUserMsg: Message = { id: messageId, role: MessageRole.USER, text, timestamp: new Date(), status: MessageStatus.PENDING, attachments: attachments.length > 0 ? attachments : undefined [...]
     
     // append user message
     setMessages(prev => [...prev, newUserMsg]);
@@ -139,7 +139,7 @@ const App: React.FC = () => {
       // send to backend
       const res = await sendMessageToGemini([...messages, newUserMsg], mode, undefined, settings);
       const responseText = easterEgg?.customResponse ? `${easterEgg.customResponse}\n\n---\n\n${res.text}` : res.text;
-      const modelMsg: Message = { id: (Date.now() + 1).toString(), role: MessageRole.MODEL, text: responseText, timestamp: new Date(), artifacts: extractArtifacts(responseText), usage: res.usage, status: MessageStatus.SENT } as Message;
+      const modelMsg: Message = { id: (Date.now() + 1).toString(), role: MessageRole.MODEL, text: responseText, timestamp: new Date(), artifacts: extractArtifacts(responseText), usage: res.usage,[...]
       setMessages(prev => [...prev, modelMsg]);
       if (res.usage && typeof res.usage.totalTokens === 'number') setCurrentSessionTokens(prev => prev + res.usage.totalTokens);
     } catch (e) { 
@@ -208,13 +208,13 @@ const App: React.FC = () => {
       {showIntro && <IntroOverlay onComplete={() => setShowIntro(false)} />}
       <EasterEggEffectRenderer effect={activeEffect} isActive={activeEffect !== 'none'} onComplete={() => setActiveEffect('none')} duration={triggeredEgg?.duration || 3000} />
       <EasterEggToast message={easterEggToast} isVisible={showEasterEggToast} onClose={() => setShowEasterEggToast(false)} />
-      <Header mode={mode} onModeChange={setMode} onReset={handleReset} onOpenSettings={() => setIsSettingsOpen(true)} showBackButton={true} onBack={handleReset} onSearchToggle={() => setIsSearchOpen(prev => !prev)} />
+      <Header mode={mode} onModeChange={setMode} onReset={handleReset} onOpenSettings={() => setIsSettingsOpen(true)} showBackButton={true} onBack={handleReset} onSearchToggle={() => setIsSearchO[...]
       <SearchBar isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} messages={messages} onMessageSelect={handleMessageSelect} />
       <Toast state={toast} onClose={() => setToast({ ...toast, isVisible: false })} />
-      <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} settings={settings} onSave={setSettings} currentSessionTokens={currentSessionTokens} personaData={PERSONA_DATA} />
+      <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} settings={settings} onSave={setSettings} currentSessionTokens={currentSessionTokens} personaData={PERSONA_DAT[...]
       {isQuickActionsManagerOpen && <QuickActionsManager quickActions={quickActions} onSave={handleSaveQuickActions} onClose={() => setIsQuickActionsManagerOpen(false)} />}
       <DivineFortune isOpen={showDivineFortune} onClose={() => setShowDivineFortune(false)} onResult={handleFortuneResult} botName={currentPersona.name} botAvatar={currentPersona.img} />
-      <FairyGroupChat isOpen={showGroupChat} onClose={() => setShowGroupChat(false)} userQuestion={groupChatQuestion} onSelectResponse={handleGroupChatResponse} onSendAllResponses={handleGroupChatAllResponses} />
+      <FairyGroupChat isOpen={showGroupChat} onClose={() => setShowGroupChat(false)} userQuestion={groupChatQuestion} onSelectResponse={handleGroupChatResponse} onSendAllResponses={handleGroupCha[...]
       
       <main className="flex-1 overflow-y-auto w-full max-w-4xl mx-auto p-4 pb-20 scrollbar-hide">
         {messages.length <= 1 && !isLoading && (
@@ -222,12 +222,12 @@ const App: React.FC = () => {
             <div className="w-full px-4">
               <div className="flex justify-center mb-6"><GroupChatTrigger onClick={() => { setGroupChatQuestion(''); setShowGroupChat(true); }} /></div>
               <div className="flex items-center justify-between mb-4 opacity-70">
-                <div className="flex items-center gap-2"><div className="h-[1px] w-8 bg-fairy-primary"></div><p className="text-fairy-primary font-bold text-xs tracking-widest">御賜法寶</p><div className="h-[1px] w-8 bg-fairy-primary"></div></div>
-                <button onClick={() => setIsQuickActionsManagerOpen(true)} className="text-xs text-fairy-primary hover:text-fairy-dark flex items-center gap-1 font-medium"><Edit3 size={12} /> 自訂</button>
+                <div className="flex items-center gap-2"><div className="h-[1px] w-8 bg-fairy-primary"></div><p className="text-fairy-primary font-bold text-xs tracking-widest">御賜法寶</p><d[...]
+                <button onClick={() => setIsQuickActionsManagerOpen(true)} className="text-xs text-fairy-primary hover:text-fairy-dark flex items-center gap-1 font-medium"><Edit3 size={12} /> 自[...]
               </div>
               <div className="grid grid-cols-2 gap-4">
                 {quickActions.map(action => (
-                  <QuickActionBtn key={action.id} icon={action.icon} label={action.label} subLabel={action.subLabel} colorClass={action.colorClass} onClick={() => handleSend(action.prompt, [])} />
+                  <QuickActionBtn key={action.id} icon={action.icon} label={action.label} subLabel={action.subLabel} colorClass={action.colorClass} onClick={() => handleSend(action.prompt, [])} /[...]
                 ))}
               </div>
               <div className="mt-6 p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-2xl border border-purple-100">
