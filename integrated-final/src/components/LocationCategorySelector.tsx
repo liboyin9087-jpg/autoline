@@ -79,12 +79,7 @@ export const LocationCategorySelector: React.FC<LocationCategorySelectorProps> =
     try {
       // 使用 Nominatim Reverse Geocoding API（免費）
       const response = await fetch(
-        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&accept-language=zh-TW`,
-        {
-          headers: {
-            'User-Agent': 'AutoLine-Fairy-Assistant/1.0'
-          }
-        }
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&accept-language=zh-TW`
       );
       const data = await response.json();
       
@@ -123,15 +118,13 @@ export const LocationCategorySelector: React.FC<LocationCategorySelectorProps> =
 
     // 如果是隨意推薦模式
     if (selectedCategories.includes('random')) {
-      const randomCategory = CATEGORIES.find(c => c.id === 'random');
-      if (randomCategory) {
-        onSelectCategory(randomCategory, { 
-          ...location, 
-          country: detectedCountry || undefined 
-        });
-        onClose();
-        return;
-      }
+      const randomCategory = CATEGORIES.find(c => c.id === 'random')!;
+      onSelectCategory(randomCategory, { 
+        ...location, 
+        country: detectedCountry || undefined 
+      });
+      onClose();
+      return;
     }
 
     // 多個類別組合
