@@ -49,7 +49,21 @@
       }
       .scrollbar-hide::-webkit-scrollbar { display: none; }
     </style>
-  </head>
+  <script>
+window.addEventListener("error", (e) => {
+  document.body.innerHTML =
+    "<pre style='white-space:pre-wrap;padding:16px;font-size:14px;background:#111;color:#f66;'>" +
+    (e?.error?.stack || e.message || e) +
+    "</pre>";
+});
+window.addEventListener("unhandledrejection", (e) => {
+  document.body.innerHTML =
+    "<pre style='white-space:pre-wrap;padding:16px;font-size:14px;background:#111;color:#f66;'>" +
+    (e?.reason?.stack || e.reason || e) +
+    "</pre>";
+});
+</script>
+</head>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/index.tsx"></script>
