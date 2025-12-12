@@ -30,7 +30,7 @@ const CATEGORIES: LocationCategory[] = [
   { id: 'attraction', name: '景點觀光', icon: '🗼', prompt: '推薦附近景點或觀光地點', color: 'bg-blue-500' },
   { id: 'shopping', name: '購物商場', icon: '🛍️', prompt: '推薦附近購物中心或商店', color: 'bg-pink-500' },
   { id: 'parking', name: '停車場', icon: '🅿️', prompt: '尋找附近停車場', color: 'bg-gray-600' },
-  { id: 'hotel', name: '住宿飯店', icon: '��', prompt: '推薦附近飯店或住宿', color: 'bg-purple-500' },
+  { id: 'hotel', name: '住宿飯店', icon: '🏨', prompt: '推薦附近飯店或住宿', color: 'bg-purple-500' },
   { id: 'transport', name: '交通運輸', icon: '🚇', prompt: '查詢附近交通工具或站點', color: 'bg-green-600' },
   { id: 'medical', name: '醫療診所', icon: '🏥', prompt: '尋找附近醫院或診所', color: 'bg-red-500' },
   { id: 'entertainment', name: '娛樂休閒', icon: '🎮', prompt: '推薦附近娛樂或休閒場所', color: 'bg-indigo-500' },
@@ -79,7 +79,12 @@ export const LocationCategorySelector: React.FC<LocationCategorySelectorProps> =
     try {
       // 使用 Nominatim Reverse Geocoding API（免費）
       const response = await fetch(
-        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&accept-language=zh-TW`
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&accept-language=zh-TW`,
+        {
+          headers: {
+            'User-Agent': 'AutoLine-Fairy-Assistant/1.0'
+          }
+        }
       );
       const data = await response.json();
       
@@ -118,13 +123,15 @@ export const LocationCategorySelector: React.FC<LocationCategorySelectorProps> =
 
     // 如果是隨意推薦模式
     if (selectedCategories.includes('random')) {
-      const randomCategory = CATEGORIES.find(c => c.id === 'random')!;
-      onSelectCategory(randomCategory, { 
-        ...location, 
-        country: detectedCountry || undefined 
-      });
-      onClose();
-      return;
+      const randomCategory = CATEGORIES.find(c => c.id === 'random');
+      if (randomCategory) {
+        onSelectCategory(randomCategory, { 
+          ...location, 
+          country: detectedCountry || undefined 
+        });
+        onClose();
+        return;
+      }
     }
 
     // 多個類別組合
