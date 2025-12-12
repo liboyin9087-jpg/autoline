@@ -1,6 +1,7 @@
 {
   "name": "line-ai-assistant",
   "version": "2.0.0",
+  "type": "module",
   "description": "LINE AI Assistant with React and Express",
   "main": "server.js",
   "scripts": {
@@ -8,11 +9,7 @@
     "dev:server": "node server.js",
     "build": "vite build",
     "preview": "vite preview",
-    "start": "node server.js",
-    "check:connection": "node check-connection.cjs",
-    "check:images": "node check-images.cjs",
-    "check:images:fix": "node check-images.cjs --fix",
-    "check:all": "npm run check:images && npm run check:connection"
+    "start": "node server.js"
   },
   "dependencies": {
     "@google/generative-ai": "^0.1.3",
