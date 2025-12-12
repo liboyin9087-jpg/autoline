@@ -21,8 +21,8 @@ export const InputArea: React.FC<{
   onFilesChange: (f: File[]) => void; 
   settings: AppSettings;
 }> = ({ onSend, onShowToast, isLoading, selectedFiles, onFilesChange, settings }) => {
-  const showMic = settings.enableMic ?? true;
-  const showEmoji = settings.enableEmoji ?? true;
+  const showMic = settings?.enableMic ?? true;
+  const showEmoji = settings?.enableEmoji ?? true;
   
   const [text, setText] = useState('');
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
