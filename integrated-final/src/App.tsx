@@ -246,6 +246,7 @@ const App: React.FC = () => {
       {isQuickActionsManagerOpen && <QuickActionsManager quickActions={quickActions} onSave={handleSaveQuickActions} onClose={() => setIsQuickActionsManagerOpen(false)} />}
       <DivineFortune isOpen={showDivineFortune} onClose={() => setShowDivineFortune(false)} onResult={handleFortuneResult} botName={currentPersona.name} botAvatar={currentPersona.img} />
       <FairyGroupChat isOpen={showGroupChat} onClose={() => setShowGroupChat(false)} userQuestion={groupChatQuestion} onSelectResponse={handleGroupChatResponse} onSendAllResponses={handleGroupChatAllResponses} />
+      <LocationCategorySelector isOpen={showLocationSelector} onClose={() => setShowLocationSelector(false)} onSelectCategory={handleSelectCategory} location={userLocation} />
       
       <main className="flex-1 overflow-y-auto w-full max-w-4xl mx-auto p-4 pb-20 scrollbar-hide">
         {messages.length <= 1 && !isLoading && (
@@ -264,6 +265,12 @@ const App: React.FC = () => {
               <div className="mt-6 p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-2xl border border-purple-100">
                 <div className="flex items-center gap-2 mb-2"><Wand2 size={16} className="text-pink-500" /><div className="text-sm font-medium">仙女小提示</div></div>
                 <div className="text-xs text-gray-600">使用快速操作能快速查詢常用項目。點選「自訂」可以管理你的快速操作。</div>
+              </div>
+              <div className="mt-4 mb-6">
+                <button onClick={handleLocationRequest} className="w-full p-4 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white rounded-2xl shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-3 font-bold">
+                  <MapPin size={24} />
+                  <span>📍 探索附近推薦</span>
+                </button>
               </div>
             </div>
           </div>
